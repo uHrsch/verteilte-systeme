@@ -13,10 +13,6 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       justifyContent: 'center',
     },
-    scanme: {
-        marginTop: 10,
-        fontSize: 20,
-    }
   });
 
 type connectProps = NativeStackNavigationProp<RootStackParamList, 'Connect'>;
@@ -30,7 +26,7 @@ function Connect() {
             <QrCodeWithWrapper text="Peter Lustig, hehe!"/>
             <Text style={{
                 ...defaultStyles.text,
-                ...styles.scanme,
+                ...defaultStyles.scanme,
             }}>
                 Let your friend scan this QR-Code to chat!
             </Text>

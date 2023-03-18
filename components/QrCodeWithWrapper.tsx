@@ -13,7 +13,7 @@ function QrCodeWithWrapper({text}: {text: string}) {
     return (
         <View style={styles.qrwrapper}>
             <QRCode
-                value="Peter Lustig, hehe!"
+                value={text}
                 size={200}
             />
         </View>

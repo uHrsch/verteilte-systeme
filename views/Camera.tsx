@@ -10,16 +10,11 @@ const styles = StyleSheet.create({
         alignItems: 'center',
       },
     square: {
-        width: '60%',
-        aspectRatio: '1/1',
+        width: 240,
+        height: 240,
         backgroundColor: 'grey',
         borderRadius: 5,
     },
-    scanme: {
-        marginTop: 10,
-        fontSize: 20,
-    }
-
 });
 
 const Camera = () => {
@@ -31,7 +26,7 @@ const Camera = () => {
             <View style={styles.square}/>
             <Text style={{
                 ...defaultStyles.text,
-                ...styles.scanme
+                ...defaultStyles.scanme
             }}>Scan QR Code</Text>
         </View>
     );

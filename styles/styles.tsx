@@ -18,4 +18,10 @@ export const defaultStyles = StyleSheet.create({
         borderBottomColor: "white",
         borderBottomWidth: 1,
     },
+    scanme: {
+        marginTop: 10,
+        fontSize: 20,
+        textAlign: "center",
+        padding: 20,
+    }
 })
