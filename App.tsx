@@ -3,6 +3,7 @@ import { Icon, IconComponentProvider, Pressable } from "@react-native-material/c
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar, Text } from 'react-native';
+import { getCallback } from "./util/editIcon";
 import Camera from "./views/Camera";
 import Chat from "./views/Chat";
 import Chatlist from "./views/Chatlist";
@@ -10,10 +11,6 @@ import Connect from "./views/Connect";
 import { ChatParams } from "./views/RootStackParams";
 
 const Stack = createNativeStackNavigator();
-
- const callback = () => {
-
- }
 
 export default function App() {
   return (
@@ -40,7 +37,7 @@ export default function App() {
                     options={({ route }) => ({ 
                         title: `Chat: ${(route.params as ChatParams).name}`,
                         headerRight: () => (
-                            <Pressable onPress={callback}>
+                            <Pressable onPress={getCallback()}>
                                 <Icon name="pencil" size={24} color="white"/>
                             </Pressable>
                         )
