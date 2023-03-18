@@ -16,6 +16,7 @@
     "expo-status-bar": "~1.4.4",
     "react": "18.2.0",
     "react-native": "0.71.3",
+    "react-native-network-info": "^5.2.1",
     "react-native-qrcode-svg": "^6.2.0",
     "react-native-rsa-native": "^2.0.5",
     "react-native-svg": "13.4.0",
