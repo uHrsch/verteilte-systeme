@@ -31,13 +31,6 @@ const styles = StyleSheet.create({
     firstItem: {
         marginTop: 20,
     },
-    header: {
-        fontSize: 30,
-        textAlign: "center",
-        paddingVertical: 10,
-        borderBottomColor: "white",
-        borderBottomWidth: 1,
-    },
     textInput: {
         backgroundColor: "white",
         padding: 10,
@@ -50,7 +43,7 @@ function Chat() {
     return (
         <KeyboardAvoidingView style={{...defaultStyles.container, ...styles.container}}>
             <View>
-                <Text style={{...styles.header, ...defaultStyles.text}}>Chat</Text>
+                <Text style={{...defaultStyles.header, ...defaultStyles.text}}>Chat</Text>
             </View>
             <FlatList
                 data={[

@@ -10,5 +10,12 @@ export const defaultStyles = StyleSheet.create({
     },
     text: {
         color: "white",
-    }
+    },
+    header: {
+        fontSize: 30,
+        textAlign: "center",
+        paddingVertical: 10,
+        borderBottomColor: "white",
+        borderBottomWidth: 1,
+    },
 })
