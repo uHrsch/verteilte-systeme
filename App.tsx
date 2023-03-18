@@ -1,20 +1,15 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
+import { IconComponentProvider } from "@react-native-material/core";
+import { StatusBar } from 'react-native';
+import Chat from "./views/Chat";
+import Connect from "./views/Connect";
 
 export default function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    // @ts-ignore
+    <IconComponentProvider IconComponent={MaterialCommunityIcons}>
+        <StatusBar/>
+        <Chat/>
+    </IconComponentProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
