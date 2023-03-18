@@ -38,7 +38,7 @@ const Chatlist = () => {
     const navigation = useNavigation<chatListProp>();
 
     const onPress = (chat: string) => {
-        navigation.navigate("Chat")
+        navigation.navigate("Chat", {name: chat, id: ""}) //TODO
     }
 
     return (
@@ -48,22 +48,22 @@ const Chatlist = () => {
         }}>
             <FlatList
                 data={[
-                    {key: 'Simon'},
-                    {key: 'Jens'},
-                    {key: 'Simon'},
-                    {key: 'Jens'},
-                    {key: 'Simon'},
-                    {key: 'Jens'},
-                    {key: 'Simon'},
-                    {key: 'Jens'},
-                    {key: 'Simon'},
-                    {key: 'Jens'},
-                    {key: 'Simon'},
-                    {key: 'Jens'},
-                    {key: 'Simon'},
-                    {key: 'Jens'},
+                    {name: 'Simon'},
+                    {name: 'Jens'},
+                    {name: 'Simon'},
+                    {name: 'Jens'},
+                    {name: 'Simon'},
+                    {name: 'Jens'},
+                    {name: 'Simon'},
+                    {name: 'Jens'},
+                    {name: 'Simon'},
+                    {name: 'Jens'},
+                    {name: 'Simon'},
+                    {name: 'Jens'},
+                    {name: 'Simon'},
+                    {name: 'Jens'},
                 ]}
-                renderItem={(item) => <ChatItem key={item.index} name={item.item.key} onPress={() => onPress(item.item.key)} isFirstItem={item.index == 0}/>}
+                renderItem={(item) => <ChatItem key={item.index} name={item.item.name} onPress={() => onPress(item.item.name)} isFirstItem={item.index == 0}/>}
             />
             <FloatingActionButton 
                 icon="qrcode"

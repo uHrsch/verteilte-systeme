@@ -1,6 +1,6 @@
 import { useNavigation } from "@react-navigation/core";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { StyleSheet, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
 import FloatingActionButton from "../components/FloatingActionButton";
 import QrCodeWithWrapper from "../components/QrCodeWithWrapper";
 import { defaultStyles } from "../styles/styles";
@@ -12,6 +12,10 @@ const styles = StyleSheet.create({
       backgroundColor: '#fff',
       alignItems: 'center',
       justifyContent: 'center',
+    },
+    scanme: {
+        marginTop: 10,
+        fontSize: 20,
     }
   });
 
@@ -24,6 +28,12 @@ function Connect() {
     return (
         <View style={{...styles.container, ...defaultStyles.container}}>
             <QrCodeWithWrapper text="Peter Lustig, hehe!"/>
+            <Text style={{
+                ...defaultStyles.text,
+                ...styles.scanme,
+            }}>
+                Let your friend scan this QR-Code to chat!
+            </Text>
             <FloatingActionButton 
                 icon="camera"
                 onPress={() => navigation.navigate("Camera")}/>

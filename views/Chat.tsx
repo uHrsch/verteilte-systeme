@@ -1,6 +1,8 @@
 import { KeyboardAvoidingView, FlatList, StyleSheet, Text, TextInput, View, Pressable } from "react-native";
 import IconButton from "../components/IconButton";
 import { defaultStyles } from "../styles/styles";
+import { ChatParams } from "./RootStackParams";
+import { useState } from "react"
 
 const styles = StyleSheet.create({
     container: {
@@ -18,7 +20,7 @@ const styles = StyleSheet.create({
         gap: 10,
     },
     item: {
-        marginBottom: 20,
+        marginTop: 20,
         borderRadius: 5,
         padding: 10,
         marginHorizontal: 10,
@@ -29,7 +31,7 @@ const styles = StyleSheet.create({
         backgroundColor: "#6398c8",
     },
     firstItem: {
-        marginTop: 20,
+        marginBottom: 20,
     },
     textInput: {
         backgroundColor: "white",
@@ -39,9 +41,18 @@ const styles = StyleSheet.create({
     }
 })
 
-function Chat() {
+function Chat({name, ip}: ChatParams) {
+
+    const [input, setInput] = useState("")
+
+    const sendMessage = () => {
+        setInput("")
+    }
+
     return (
-        <KeyboardAvoidingView style={{...defaultStyles.container, ...styles.container}}>
+        <KeyboardAvoidingView 
+            style={{...defaultStyles.container, ...styles.container}}
+        >
             <FlatList
                 data={[
                     {
@@ -110,13 +121,23 @@ function Chat() {
                         </Text>
                     </View>
                 )}
+                inverted
             />
             <View style={styles.inputContainer}>
                 <TextInput
                     placeholder="Input your message"
                     style={styles.textInput}
+                    blurOnSubmit={false}
+                    returnKeyType="none"
+                    multiline
+                    value={input}
+                   onChangeText={text => setInput(text)}
                 />
-                <IconButton icon="send"/>
+                <View style={{
+                    marginTop: "auto",
+                }}>
+                    <IconButton icon="send" onPress={sendMessage}/>
+                </View>
             </View>
         </KeyboardAvoidingView>
     )
