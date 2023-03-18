@@ -42,9 +42,6 @@ const styles = StyleSheet.create({
 function Chat() {
     return (
         <KeyboardAvoidingView style={{...defaultStyles.container, ...styles.container}}>
-            <View>
-                <Text style={{...defaultStyles.header, ...defaultStyles.text}}>Chat</Text>
-            </View>
             <FlatList
                 data={[
                     {
@@ -107,7 +104,7 @@ function Chat() {
                         ...styles.item, 
                         ...(item.item.self ? styles.itemSelf : {}),
                         ...(item.index == 0 ? styles.firstItem : {})
-                    }}>
+                    }} key={item.index}>
                         <Text style={defaultStyles.text}>
                             {item.item.text}
                         </Text>

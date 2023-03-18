@@ -7,7 +7,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         alignItems: "center",
         padding: 10,
-        backgroundColor: "rgba(100, 100, 100, 0.5)",
+        backgroundColor: "#434749",
         aspectRatio: "1/1",
         borderRadius: 5,
     }

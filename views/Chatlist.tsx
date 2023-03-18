@@ -1,7 +1,10 @@
+import { useNavigation } from "@react-navigation/core";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import React from "react";
 import { StyleSheet, View, FlatList, Text, Pressable} from 'react-native';
 import FloatingActionButton from "../components/FloatingActionButton";
 import { defaultStyles } from "../styles/styles";
+import { RootStackParamList } from "./RootStackParams";
 
 const styles = StyleSheet.create({
     maincontainer: {
@@ -9,6 +12,7 @@ const styles = StyleSheet.create({
         flexDirection: "column",
         height: "100%",
         flex: 1,
+        paddingTop: 10,
     },
     item: {
       padding: 10,
@@ -16,7 +20,7 @@ const styles = StyleSheet.create({
       height: 44,
     },
     listitem: {
-        backgroundColor: "rgba(100, 100, 100, 0.5)",
+        backgroundColor: "#434749",
         width: "100%",
         borderTopColor: "white",
         borderTopWidth: 1,
@@ -27,29 +31,43 @@ const styles = StyleSheet.create({
     }
   });
 
-function onPress(chat: String) {
-    
-}
+type chatListProp = NativeStackNavigationProp<RootStackParamList, 'Chats'>;
 
 const Chatlist = () => {
+
+    const navigation = useNavigation<chatListProp>();
+
+    const onPress = (chat: string) => {
+        navigation.navigate("Chat")
+    }
+
     return (
         <View style={{
             ...styles.maincontainer,
             ...defaultStyles.container,
         }}>
-
-            <View>
-                <Text style={{...defaultStyles.header, ...defaultStyles.text}}>Chats</Text>
-            </View>
-
             <FlatList
                 data={[
                     {key: 'Simon'},
                     {key: 'Jens'},
+                    {key: 'Simon'},
+                    {key: 'Jens'},
+                    {key: 'Simon'},
+                    {key: 'Jens'},
+                    {key: 'Simon'},
+                    {key: 'Jens'},
+                    {key: 'Simon'},
+                    {key: 'Jens'},
+                    {key: 'Simon'},
+                    {key: 'Jens'},
+                    {key: 'Simon'},
+                    {key: 'Jens'},
                 ]}
-                renderItem={(item) => <ChatItem name={item.item.key} onPress={() => onPress(item.item.key)} isFirstItem={item.index == 0}/>}
+                renderItem={(item) => <ChatItem key={item.index} name={item.item.key} onPress={() => onPress(item.item.key)} isFirstItem={item.index == 0}/>}
             />
-            <FloatingActionButton icon="qrcode"/>
+            <FloatingActionButton 
+                icon="qrcode"
+                onPress={() => navigation.navigate("Connect")}/>
 
         </View>
     );
