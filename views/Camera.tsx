@@ -1,26 +1,38 @@
 import React from "react";
 import { StyleSheet, View, Text} from 'react-native';
+import { defaultStyles } from "../styles/styles";
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
         paddingTop: 22,
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
       },
     square: {
-        width: '50%',
+        width: '60%',
         aspectRatio: '1/1',
-        backgroundColor: 'grey'
+        backgroundColor: 'grey',
+        borderRadius: 5,
     },
+    scanme: {
+        marginTop: 10,
+        fontSize: 20,
+    }
 
 });
 
 const Camera = () => {
     return (
-        <View style={styles.container}>
+        <View style={{
+            ...defaultStyles.container,
+            ...styles.container
+        }}>
             <View style={styles.square}/>
-            <Text>Scan QR Code</Text>
+            <Text style={{
+                ...defaultStyles.text,
+                ...styles.scanme
+            }}>Scan QR Code</Text>
         </View>
     );
 };
