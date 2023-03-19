@@ -8,7 +8,7 @@ import { getLocalInformation } from "../util/generateQRCode";
 import { RootStackParamList } from "./RootStackParams";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { useConnectionContext } from "../contexts/ConnectionContext";
+import * as Brightness from 'expo-brightness';
 
 const styles = StyleSheet.create({
     container: {
@@ -37,7 +37,13 @@ function Connect() {
             }
             // openServer() TODO does not work with expo
             setQrCodeInfo(JSON.stringify(localInfo))
+
+            Brightness.setBrightnessAsync(1);
         })()
+
+        return () => {
+            Brightness.restoreSystemBrightnessAsync()
+        }
     }, [])
 
     return (
