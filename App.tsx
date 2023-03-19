@@ -3,7 +3,9 @@ import { Icon, IconComponentProvider, Pressable } from "@react-native-material/c
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'react-native';
-import EditIconContextProvider, { useEditIconContext } from "./contexts/EditIconContext";
+import ContextChain from "./components/ContextChain";
+import { useChatFunctionContext } from "./contexts/ChatFunctionContext";
+import { useEditIconContext } from "./contexts/EditIconContext";
 import Camera from "./views/Camera";
 import Chat from "./views/Chat";
 import Chatlist from "./views/Chatlist";
@@ -16,9 +18,9 @@ export default function App() {
   return (
     // @ts-ignore
     <IconComponentProvider IconComponent={MaterialCommunityIcons}>
-        <EditIconContextProvider>
+        <ContextChain>
             <Navigation/>
-        </EditIconContextProvider>
+        </ContextChain>
     </IconComponentProvider>
   );
 }
@@ -26,6 +28,7 @@ export default function App() {
 function Navigation() {
 
     const { open } = useEditIconContext()
+    const { getName } = useChatFunctionContext()
 
     return (
         <NavigationContainer theme={{
@@ -47,7 +50,7 @@ function Navigation() {
                 <Stack.Screen 
                     name="Chat" 
                     options={({ route }) => ({ 
-                        title: `Chat: ${(route.params as ChatParams).name}`,
+                        title: `Chat: ${getName((route.params as ChatParams).id)}`,
                         headerRight: () => (
                             <Pressable onPress={open}>
                                 <Icon name="pencil" size={24} color="white"/>
@@ -57,7 +60,6 @@ function Navigation() {
                 >
                     {props =>(
                         <Chat 
-                            name={(props.route.params as ChatParams).name} 
                             ip={(props.route.params as ChatParams).ip} 
                             id={(props.route.params as ChatParams).id} 
                             {...props}/>

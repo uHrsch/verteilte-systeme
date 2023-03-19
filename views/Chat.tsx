@@ -2,9 +2,11 @@ import { KeyboardAvoidingView, FlatList, Modal, StyleSheet, Text, TextInput, Vie
 import IconButton from "../components/IconButton";
 import { defaultStyles } from "../styles/styles";
 import { ChatParams } from "./RootStackParams";
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import ChangeNameModal from "../components/ChangeNameModal";
 import { useEditIconContext } from "../contexts/EditIconContext";
+import { useChatFunctionContext } from "../contexts/ChatFunctionContext";
+import { ActivityIndicator } from "@react-native-material/core";
 
 const styles = StyleSheet.create({
     container: {
@@ -43,13 +45,26 @@ const styles = StyleSheet.create({
     },
 })
 
-function Chat({name, ip}: ChatParams) {
+function Chat({id, ip}: ChatParams) {
 
     const [input, setInput] = useState("")
     
     const { isOpened, close } = useEditIconContext()
+    const { setConversation, sendMessage: sendMessageInternal, getName ,getMessages, changeName } = useChatFunctionContext()
+    const messages = getMessages()
+
+    useEffect(() => {
+        console.log("useeffect")
+        setConversation(id)
+
+        return () => {
+            console.log("useeffect off")
+            setConversation(null)
+        }
+    }, [])
 
     const sendMessage = () => {
+        sendMessageInternal(input)
         setInput("")
     }
 
@@ -57,94 +72,55 @@ function Chat({name, ip}: ChatParams) {
         <KeyboardAvoidingView 
             style={{...defaultStyles.container, ...styles.container}}
         >
-            <FlatList
-                data={[
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: true,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: false,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: true,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: false,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: true,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: false,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: true,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: false,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: true,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: false,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: true,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: false,
-                    },
-                    {
-                        text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-                        self: true,
-                    },
-
-                ]}
-                renderItem={(item) => (
-                    <View style={{
-                        ...defaultStyles.primaryContainer, 
-                        ...styles.item, 
-                        ...(item.item.self ? styles.itemSelf : {}),
-                        ...(item.index == 0 ? styles.firstItem : {})
-                    }} key={item.index}>
-                        <Text style={defaultStyles.text}>
-                            {item.item.text}
-                        </Text>
-                    </View>
-                )}
-                inverted
-            />
-            <View style={styles.inputContainer}>
-                <TextInput
-                    placeholder="Input your message"
-                    style={styles.textInput}
-                    blurOnSubmit={false}
-                    returnKeyType="none"
-                    multiline
-                    value={input}
-                   onChangeText={text => setInput(text)}
+            {messages === null ? (
+                <ActivityIndicator
+                    size={50}
+                    color="white"
+                    style={{
+                        marginTop: 40
+                    }}
                 />
-                <View style={{
-                    marginTop: "auto",
-                }}>
-                    <IconButton icon="send" onPress={sendMessage}/>
-                </View>
-            </View>
+            ) : (
+                <FlatList
+                    data={messages}
+                    renderItem={(item) => (
+                        <View style={{
+                            ...defaultStyles.primaryContainer, 
+                            ...styles.item, 
+                            ...(item.item.self ? styles.itemSelf : {}),
+                            ...(item.index == 0 ? styles.firstItem : {})
+                        }} key={item.index}>
+                            <Text style={defaultStyles.text}>
+                                {item.item.text}
+                            </Text>
+                        </View>
+                    )}
+                    inverted
+                />
+            )}
+            <Text>{id}</Text>
 
-            <ChangeNameModal name={name} isOpened={isOpened} close={close} changeName={(name) => {}}/>
+            
+            {ip !== undefined && (
+                <View style={styles.inputContainer}>
+                    <TextInput
+                        placeholder="Input your message"
+                        style={styles.textInput}
+                        blurOnSubmit={false}
+                        returnKeyType="none"
+                        multiline
+                        value={input}
+                        onChangeText={text => setInput(text)}
+                    />
+                    <View style={{
+                        marginTop: "auto",
+                    }}>
+                        <IconButton icon="send" onPress={sendMessage}/>
+                    </View>
+                </View>
+            )}
+
+            <ChangeNameModal name={getName(id)} isOpened={isOpened} close={close} changeName={changeName}/>
         </KeyboardAvoidingView>
     )
 }
