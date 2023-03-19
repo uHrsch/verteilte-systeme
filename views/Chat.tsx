@@ -1,12 +1,12 @@
-import { KeyboardAvoidingView, FlatList, Modal, StyleSheet, Text, TextInput, View } from "react-native";
+import { KeyboardAvoidingView, FlatList, StyleSheet, Text, TextInput, View } from "react-native";
 import IconButton from "../components/IconButton";
 import { defaultStyles } from "../styles/styles";
 import { ChatParams } from "./RootStackParams";
 import { useEffect, useState } from "react"
 import ChangeNameModal from "../components/ChangeNameModal";
 import { useEditIconContext } from "../contexts/EditIconContext";
-import { useChatFunctionContext } from "../contexts/ChatFunctionContext";
-import { ActivityIndicator } from "@react-native-material/core";
+import { useStorageContext } from "../contexts/StorageContext";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const styles = StyleSheet.create({
     container: {
@@ -43,6 +43,11 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         flexGrow: 1,
     },
+    loadingSpinner: {
+        marginTop: 40,
+        flex: 1,
+        justifyContent: "flex-start"
+    }
 })
 
 function Chat({id, ip}: ChatParams) {
@@ -50,15 +55,13 @@ function Chat({id, ip}: ChatParams) {
     const [input, setInput] = useState("")
     
     const { isOpened, close } = useEditIconContext()
-    const { setConversation, sendMessage: sendMessageInternal, getName ,getMessages, changeName } = useChatFunctionContext()
+    const { setConversation, storeMessage: sendMessageInternal, getName ,getMessages, changeName } = useStorageContext()
     const messages = getMessages()
 
     useEffect(() => {
-        console.log("useeffect")
         setConversation(id)
 
         return () => {
-            console.log("useeffect off")
             setConversation(null)
         }
     }, [])
@@ -73,13 +76,7 @@ function Chat({id, ip}: ChatParams) {
             style={{...defaultStyles.container, ...styles.container}}
         >
             {messages === null ? (
-                <ActivityIndicator
-                    size={50}
-                    color="white"
-                    style={{
-                        marginTop: 40
-                    }}
-                />
+                <LoadingSpinner/>
             ) : (
                 <FlatList
                     data={messages}
@@ -98,10 +95,9 @@ function Chat({id, ip}: ChatParams) {
                     inverted
                 />
             )}
-            <Text>{id}</Text>
 
             
-            {ip !== undefined && (
+            {ip !== undefined || true && (
                 <View style={styles.inputContainer}>
                     <TextInput
                         placeholder="Input your message"
@@ -119,8 +115,8 @@ function Chat({id, ip}: ChatParams) {
                     </View>
                 </View>
             )}
-
-            <ChangeNameModal name={getName(id)} isOpened={isOpened} close={close} changeName={changeName}/>
+            {/*getName(id)*/}
+            <ChangeNameModal name={`TODO`} isOpened={isOpened} close={close} changeName={changeName}/>
         </KeyboardAvoidingView>
     )
 }

@@ -1,36 +1,51 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
+import { Message } from "../types/message"
+import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useConnectionContext } from "./ConnectionContext"
 
-type Message = {
-    text: string,
-    self: boolean,
-}
-
-type ChatFunctionContextType = {
-    setConversation: (id: string  | null) => void,
-    sendMessage: (text: string) => void,
+type StorageContextType = {
+    getConversationIds: () => Promise<string[]>
+    setConversation: (id: string  | null) => Promise<void>,
+    activeConversation: string | null,
+    storeMessage: (text: string) => void,
     changeName: (newName: string) => void,
     getMessages: () => Message[] | null,
-    getName: (id?: string) => string,
+    getName: (id?: string) => Promise<string>,
 }
 
-const defaultValues:ChatFunctionContextType = {
-    setConversation: ()  => {},
-    sendMessage: () => {},
+const defaultValues:StorageContextType = {
+    getConversationIds: async () => [],
+    setConversation: async ()  => {},
+    activeConversation: null,
+    storeMessage: () => {},
     changeName: () => {},
     getMessages: () => null,
-    getName: () => "Error",
+    getName: async () => "Error",
 }
 
-const ChatFunctionContext = createContext<ChatFunctionContextType>(defaultValues)
+const StorageContext = createContext<StorageContextType>(defaultValues)
 
-export const useChatFunctionContext = () => useContext(ChatFunctionContext)
+export const useStorageContext = () => useContext(StorageContext)
 
-function ChatFunctionContextProvider({children}:{children: React.ReactNode}) {
-    
-    const [id, setId] = useState<string | null>(null)
+function StorageContextProvider({children}:{children: React.ReactNode}) {
+
+    const [conversation, _setConversation] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[] | null>(null)
+    const [name, setName] = useState<string | null>(null)
 
-    const loadMessagesFromId = (id: string): Message[] => {
+    const { sendMessage, off, on } = useConnectionContext()
+
+    useEffect(() => {
+        on((message) => {
+            storeMessage(message)
+        })
+
+        return () => {
+            off()
+        }
+    }, [])
+
+    const loadMessages = (id: string) => {
         return [{
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: true,
@@ -85,60 +100,71 @@ function ChatFunctionContextProvider({children}:{children: React.ReactNode}) {
         }]
     }
 
-    const setConversation = (id: string | null) => {
-        if(id == null) {
-            console.log("remove conversation")
+    const loadName = async (id: string) => {
+        const nameOrNull = await AsyncStorage.getItem(`name.${id}`)
+        if(nameOrNull == null) return id;
+
+        return nameOrNull
+    }
+
+    const getConversationIds = async () => {
+        return (await AsyncStorage.getAllKeys())
+            .filter(e => e.startsWith("chat."))
+            .map(e => e.substring("chat.".length))
+    }
+
+    const setConversation = async (id: string | null) => {
+        if(id === null) {
+            _setConversation(null)
             setMessages(null)
-            setId(null)
+            setName(null)
             return;
         }
 
-        console.log("load conversation")
-        setId(id)
-        setTimeout(() => {
-            console.log("set messages")
-            setMessages(loadMessagesFromId(id))
-        }, 1000)
+        _setConversation(id)
+        setMessages(loadMessages(id))
+        setName(await loadName(id))
     }
 
-    const sendMessage = (text: string) => {
-
+    const storeMessage = (text: string) => {
+        //TODO local storage
+        sendMessage(text)
+        setMessages(m => [
+            {
+                text,
+                self: true,
+            },
+            ...(m ||[]),
+        ])
     }
+    const changeName = (name: string) => {
+        if(conversation == null) return;
 
-    const changeName = (text: string) => {
-
+        AsyncStorage.setItem(`name.${conversation}`, name)
+        setName(name)
     }
-
-    const getMessages = () => {
-        return messages
-    }
-
-    const getName = (_id?: string) => {
-        if(_id === undefined) {
-            if(id === null) {
-                return "N/A"
-            } else {
-                return getNameFromId(id)
-            }
+    const getMessages = () => messages
+    const getName = async (id?: string) => {
+        if(id === undefined) {
+            if(name !== null) return name;
+            return "Error 1"
         }
-        return getNameFromId(_id)
-    }
-
-    const getNameFromId = (_id: string) => {
-        return "Hehe" + _id
+        return await loadName(id)
     }
 
     return (
-        <ChatFunctionContext.Provider value={{
+        <StorageContext.Provider value={{
+            getConversationIds,
             setConversation,
-            sendMessage,
+            activeConversation: conversation,
+            storeMessage,
             changeName,
             getMessages,
             getName
         }}>
             {children}
-        </ChatFunctionContext.Provider>
+        </StorageContext.Provider>
     )
 }
 
-export default ChatFunctionContextProvider
+export default StorageContextProvider

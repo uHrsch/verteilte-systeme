@@ -1,12 +1,15 @@
-import ChatFunctionContextProvider from "../contexts/ChatFunctionContext"
+import ConnectionContextProvider from "../contexts/ConnectionContext"
 import EditIconContextProvider from "../contexts/EditIconContext"
+import StorageContextProvider from "../contexts/StorageContext"
 
 function ContextChain({children}: {children: React.ReactNode}) {
     return (
         <EditIconContextProvider>
-            <ChatFunctionContextProvider>
-                {children}
-            </ChatFunctionContextProvider>
+            <StorageContextProvider>
+                <ConnectionContextProvider>
+                        {children}
+                </ConnectionContextProvider>
+            </StorageContextProvider>
         </EditIconContextProvider>
     )
 }

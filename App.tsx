@@ -4,8 +4,8 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'react-native';
 import ContextChain from "./components/ContextChain";
-import { useChatFunctionContext } from "./contexts/ChatFunctionContext";
 import { useEditIconContext } from "./contexts/EditIconContext";
+import { useStorageContext } from "./contexts/StorageContext";
 import Camera from "./views/Camera";
 import Chat from "./views/Chat";
 import Chatlist from "./views/Chatlist";
@@ -28,7 +28,7 @@ export default function App() {
 function Navigation() {
 
     const { open } = useEditIconContext()
-    const { getName } = useChatFunctionContext()
+    const { getName } = useStorageContext()
 
     return (
         <NavigationContainer theme={{

@@ -1,9 +1,10 @@
 import { useNavigation } from "@react-navigation/core";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { StyleSheet, View, FlatList, Text, Pressable} from 'react-native';
 import FloatingActionButton from "../components/FloatingActionButton";
-import { useChatFunctionContext } from "../contexts/ChatFunctionContext";
+import LoadingSpinner from "../components/LoadingSpinner";
+import { useStorageContext } from "../contexts/StorageContext";
 import { defaultStyles } from "../styles/styles";
 import { RootStackParamList } from "./RootStackParams";
 
@@ -36,44 +37,55 @@ type chatListProp = NativeStackNavigationProp<RootStackParamList, 'Chats'>;
 
 const Chatlist = () => {
 
+    const [chats, setChats] = useState<{id: string, name: string}[] | null>(null)
     const navigation = useNavigation<chatListProp>();
-    const { getName } = useChatFunctionContext()
+    const { getConversationIds, getName } = useStorageContext()
     
     const onPress = (id: string) => {
         navigation.navigate("Chat", {id: id})
     }
+
+    useEffect(() => {
+        (async () => {
+            const ids = await getConversationIds()
+            const namesPromise = ids.map(id => getName(id))
+            const names = await Promise.all(namesPromise)
+
+            const data = ids.map((id, index) => ({
+                id,
+                name: names[index]
+            }))
+            setChats(data)
+        })()
+    }, [])
 
     return (
         <View style={{
             ...styles.maincontainer,
             ...defaultStyles.container,
         }}>
-            <FlatList
-                data={[
-                    {
-                        id: "0",
-                    }, {
-                        id: "1",
-                    }, {
-                        id: "2",
-                    }, {
-                        id: "3",
-                    }, {
-                        id: "4",
-                    }, {
-                        id: "5",
-                    }, {
-                        id: "6",
-                    }, {
-                        id: "7",
-                    }, {
-                        id: "8",
-                    }, {
-                        id: "9",
-                    },
-                ]}
-                renderItem={(item) => <ChatItem key={item.index} name={getName(item.item.id)} onPress={() => onPress(item.item.id)} isFirstItem={item.index == 0}/>}
-            />
+            {
+                chats === null ? (
+                    <LoadingSpinner/>
+                ) : (
+                    chats.length > 0 ? (
+                        <FlatList
+                            data={chats}
+                            renderItem={(item) => <ChatItem key={item.index} name={item.item.name} onPress={() => onPress(item.item.id)} isFirstItem={item.index == 0}/>}
+                        />
+                    ) : (
+                        <Text style={[defaultStyles.text, {
+                            textAlign: "center",
+                            fontSize: 20,
+                            fontWeight: "bold",
+                            padding: 20,
+                        }]}>
+                            Click the button in the lower right corner to get started!
+                        </Text>
+                    )
+                    
+                )
+            }
             <FloatingActionButton 
                 icon="qrcode"
                 onPress={() => navigation.navigate("Connect")}/>

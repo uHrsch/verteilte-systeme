@@ -1,15 +1,31 @@
-import { RSAKeychain } from 'react-native-rsa-native'
-import { NetworkInfo } from 'react-native-network-info'
+// @ts-ignore
+const RSAKey = require("react-native-rsa")
+//import RSAKey from 'react-native-rsa'
+import * as Network from "expo-network"
+import * as SecureStore from 'expo-secure-store';
 
-function genKey(){
-    RSAKeychain.generateKeys("myKey", 1024)
+async function genKey(){
+    //REMOVE AFTER TESTING
+    //await SecureStore.deleteItemAsync("keypair.public")
+
+    const pubkey = await SecureStore.getItemAsync("keypair.public")
+    if(pubkey !== null) return;
+
+    const rsa = new RSAKey()
+    rsa.generate(1024, '10001');
+
+    await SecureStore.setItemAsync("keypair.public", rsa.getPublicString())
+    await SecureStore.setItemAsync("keypair.private", rsa.getPrivateString())
 }
 
-function getLocalInformation(){
+export async function getLocalInformation(){
+    genKey()
     // Get Local IP
-    const localIp = NetworkInfo.getIPAddress();
-    const pubKey = RSAKeychain.getPublicKey('myKey');
-    console.log(localIp);
-    console.log(pubKey);
+    
+    const networkState = await Network.getNetworkStateAsync()
+    if(!networkState.isConnected) return null 
+
+    const localIp = await Network.getIpAddressAsync()
+    const pubKey = await SecureStore.getItemAsync("keypair.public")
     return {localIp, pubKey};
 }
