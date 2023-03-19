@@ -3,6 +3,10 @@ import React, { useEffect, useState } from "react";
 import { StyleSheet, View, Text} from 'react-native';
 import { defaultStyles } from "../styles/styles";
 import QrCodeScannerImage from "../assets/qrcode.svg"
+import { useConnectionContext } from "../contexts/ConnectionContext";
+import { useNavigation } from "@react-navigation/native";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { RootStackParamList } from "./RootStackParams";
 
 const styles = StyleSheet.create({
     container: {
@@ -20,11 +24,15 @@ const styles = StyleSheet.create({
 });
 
 type Permission = "NOT_SET" | "DENIED" | "ALLOWED"
+type cameraProp = NativeStackNavigationProp<RootStackParamList, 'Camera'>;
 
 const Camera = () => {
     
     const [hasPermission, setHasPermission] = useState<Permission>("NOT_SET")
     const [scanned, setScanned] = useState(false)
+
+    const { connect } = useConnectionContext()
+    const navigation = useNavigation<cameraProp>()
 
     useEffect(() => {
         const getBarCodeScannerPermissions = async () => {
@@ -35,9 +43,11 @@ const Camera = () => {
         getBarCodeScannerPermissions();
     }, [])
 
-    const handleBarCodeScanned = ({type, data}: BarCodeScannerResult) => {
+    const handleBarCodeScanned = ({data}: BarCodeScannerResult) => {
         setScanned(true);
-        alert(type + " " + data)
+        const {localIp, pubKey} = JSON.parse(data)
+        // connect(localIp, pubKey) TODO does not work with expo
+        navigation.navigate("Chat", {id: pubKey, ip: localIp})
     }
 
     if(hasPermission == "NOT_SET") {

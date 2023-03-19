@@ -4,7 +4,7 @@ import * as SecureStore from 'expo-secure-store';
 
 export async function genKey(){
     //REMOVE AFTER TESTING
-    await SecureStore.deleteItemAsync("keypair.public")
+    //await SecureStore.deleteItemAsync("keypair.public")
 
     const pubkey = await SecureStore.getItemAsync("keypair.public")
     if(pubkey !== null) return;

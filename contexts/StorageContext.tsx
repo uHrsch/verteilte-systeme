@@ -37,7 +37,11 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
 
     useEffect(() => {
         on((message) => {
-            storeMessage(message)
+            setMessageHistory({
+                self: false,
+                text: message.text,
+                timestamp: message.timestamp
+            })
         })
 
         return () => {
@@ -49,54 +53,67 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
         return [{
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: true,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: false,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: true,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: false,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: true,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: false,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: true,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: false,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: true,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: false,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: true,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: false,
+            timestamp: 0,
         },
         {
             text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
             self: true,
+            timestamp: 0,
         }]
     }
 
@@ -126,17 +143,29 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
         setName(await loadName(id))
     }
 
-    const storeMessage = (text: string) => {
+    const storeMessageText = (text: string) => {
+        const message:Message = {
+            text,
+            self: true,
+            timestamp: new Date().getTime()
+        }
+        
+        storeMessage(message)
+    }
+
+    const storeMessage = (message: Message) => {
+        sendMessage(message)
+        setMessageHistory(message)
+    }
+
+    const setMessageHistory = (message: Message) => {
         //TODO local storage
-        sendMessage(text)
         setMessages(m => [
-            {
-                text,
-                self: true,
-            },
+            message,
             ...(m ||[]),
         ])
     }
+
     const changeName = (name: string) => {
         if(conversation == null) return;
 
@@ -157,7 +186,7 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
             getConversationIds,
             setConversation,
             activeConversation: conversation,
-            storeMessage,
+            storeMessage: storeMessageText,
             changeName,
             getMessages,
             getName

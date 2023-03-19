@@ -1,12 +1,13 @@
 import { createContext, useContext, useState } from "react"
 import TcpSocket from "react-native-tcp-socket"
+import { MessageDTO } from "../types/message"
 
 type ConnectionContextType = {
     openServer: () => void,
-    connect: (ip: string) => void,
+    connect: (ip: string, publicKey: string) => void,
     disconnect: () => void,
-    sendMessage: (message: string) => void,
-    on: (callback: (message: string) => void) => void,
+    sendMessage: (message: MessageDTO) => void,
+    on: (callback: (message: MessageDTO) => void) => void,
     off: () => void,
     isConnected: boolean
 }
@@ -27,7 +28,7 @@ export const useConnectionContext = () => useContext(ConnectionContext)
 
 function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
-    const [callback, setCallback] = useState<((message: string) => void) | null>()
+    const [callback, setCallback] = useState<((message: MessageDTO) => void) | null>()
     const [socket, setSocket] = useState<TcpSocket.Socket | null>(null)
 
     const openServer = () => {
@@ -39,8 +40,12 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
             setSocket(socket)
 
-            socket.on("data", (data) => {
-                if(callback) callback(data.toString())
+            socket.on("data", (rawData) => {
+                const { type, data } = JSON.parse(rawData.toString())
+
+                if(type === "message" && callback) {
+                    callback(data as MessageDTO)
+                } 
             })
 
             socket.on("error", () => {
@@ -53,7 +58,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         }).listen({port: 80, host: "0.0.0.0"})
     }
 
-    const connect = (ip: string) => {
+    const connect = (ip: string, publicKey: string) => {
         if(socket != null) {
             socket.destroy()
         }
@@ -65,8 +70,12 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         }
 
         const client = TcpSocket.createConnection(options, () => {
-            client.on("data", (data) => {
-                if(callback) callback(data.toString())
+            client.on("data", (rawData) => {
+                const { type, data } = JSON.parse(rawData.toString())
+
+                if(type === "message" && callback) {
+                    callback(data as MessageDTO)
+                } 
             })
         })
         client.on("close", () => setSocket(null))
@@ -85,14 +94,17 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         setSocket(null)
     }
 
-    const sendMessage = (message: string) => {
+    const sendMessage = (message: MessageDTO) => {
         if(socket == null) return;
 
-        socket.write(message) //TODO encryption
+        socket.write(JSON.stringify({
+            type: "message",
+            message,
+        })) //TODO encryption
     }
 
-    const on = (_callback: (message: string) => void) => {
-        setCallback(_callback)
+    const on = (_callback: (message: MessageDTO) => void) => {
+        setCallback(() => _callback)
     }
 
     const off = () => {

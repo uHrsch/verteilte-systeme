@@ -7,11 +7,11 @@ function ContextChain({children}: {children: React.ReactNode}) {
     return (
         <RSAContextProvider>
             <EditIconContextProvider>
-                <StorageContextProvider>
-                    <ConnectionContextProvider>
+                <ConnectionContextProvider>
+                    <StorageContextProvider>
                             {children}
-                    </ConnectionContextProvider>
-                </StorageContextProvider>
+                        </StorageContextProvider>
+                </ConnectionContextProvider>
             </EditIconContextProvider>
         </RSAContextProvider>
     )

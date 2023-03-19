@@ -8,6 +8,7 @@ import { getLocalInformation } from "../util/generateQRCode";
 import { RootStackParamList } from "./RootStackParams";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { useConnectionContext } from "../contexts/ConnectionContext";
 
 const styles = StyleSheet.create({
     container: {
@@ -25,13 +26,16 @@ function Connect() {
     const navigation = useNavigation<connectProps>();
     const [qrCodeInfo, setQrCodeInfo] = useState<string|undefined|null>(undefined)
 
+    // const { openServer } = useConnectionContext() TODO does not work with expo
+
     useEffect(() => {
         (async () => {
             const localInfo = await getLocalInformation()
-            if(localInfo == null ||localInfo.localIp == null /*|| localInfo.pubKey == undefined*/) {
+            if(localInfo == null ||localInfo.localIp == null) {
                 setQrCodeInfo(null)
                 return;
             }
+            // openServer() TODO does not work with expo
             setQrCodeInfo(JSON.stringify(localInfo))
         })()
     }, [])
