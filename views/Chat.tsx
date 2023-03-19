@@ -1,9 +1,10 @@
-import { KeyboardAvoidingView, FlatList, Modal, StyleSheet, Text, TextInput, View, Pressable } from "react-native";
+import { KeyboardAvoidingView, FlatList, Modal, StyleSheet, Text, TextInput, View } from "react-native";
 import IconButton from "../components/IconButton";
 import { defaultStyles } from "../styles/styles";
 import { ChatParams } from "./RootStackParams";
-import { useEffect, useState } from "react"
-import { registerEditCallback } from "../util/editIcon";
+import { useState } from "react"
+import ChangeNameModal from "../components/ChangeNameModal";
+import { useEditIconContext } from "../contexts/EditIconContext";
 
 const styles = StyleSheet.create({
     container: {
@@ -45,17 +46,12 @@ const styles = StyleSheet.create({
 function Chat({name, ip}: ChatParams) {
 
     const [input, setInput] = useState("")
-    const [isEditOpened, setEditOpened] = useState(false)
     
+    const { isOpened, close } = useEditIconContext()
+
     const sendMessage = () => {
         setInput("")
     }
-
-    useEffect(() => {
-        registerEditCallback(() => {
-            setEditOpened(true)
-        })
-    }, [])
 
     return (
         <KeyboardAvoidingView 
@@ -148,27 +144,7 @@ function Chat({name, ip}: ChatParams) {
                 </View>
             </View>
 
-            <Modal 
-                visible={isEditOpened}
-                transparent
-                onRequestClose={() => setEditOpened(false)}
-            >
-                <View style={{
-                    backgroundColor: "rgba(100, 100, 100, 0.5)",
-                    flex: 1,
-                    justifyContent: "center",
-                    alignItems: "center",
-                }}>
-                    <View style={{
-                        backgroundColor: "white",
-                        padding: 20,
-                        width: "90%",
-                        borderRadius: 5,
-                    }}>
-                        <Text>TODO</Text>
-                    </View>
-                </View>
-            </Modal>
+            <ChangeNameModal name={name} isOpened={isOpened} close={close} changeName={(name) => {}}/>
         </KeyboardAvoidingView>
     )
 }

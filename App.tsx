@@ -3,6 +3,7 @@ import { Icon, IconComponentProvider, Pressable } from "@react-native-material/c
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar, Text } from 'react-native';
+import EditIconContextProvider, { useEditIconContext } from "./contexts/EditIconContext";
 import { getCallback } from "./util/editIcon";
 import Camera from "./views/Camera";
 import Chat from "./views/Chat";
@@ -16,6 +17,18 @@ export default function App() {
   return (
     // @ts-ignore
     <IconComponentProvider IconComponent={MaterialCommunityIcons}>
+        <EditIconContextProvider>
+            <Navigation/>
+        </EditIconContextProvider>
+    </IconComponentProvider>
+  );
+}
+
+function Navigation() {
+
+    const { open } = useEditIconContext()
+
+    return (
         <NavigationContainer theme={{
             colors: {
                 background: "#232a2f",
@@ -37,16 +50,21 @@ export default function App() {
                     options={({ route }) => ({ 
                         title: `Chat: ${(route.params as ChatParams).name}`,
                         headerRight: () => (
-                            <Pressable onPress={getCallback()}>
+                            <Pressable onPress={open}>
                                 <Icon name="pencil" size={24} color="white"/>
                             </Pressable>
                         )
                     })}
                 >
-                    {props =><Chat name="N/A" id="" {...props}/>}
+                    {props =>(
+                        <Chat 
+                            name={(props.route.params as ChatParams).name} 
+                            ip={(props.route.params as ChatParams).ip} 
+                            id={(props.route.params as ChatParams).id} 
+                            {...props}/>
+                    )}
                 </Stack.Screen>
             </Stack.Navigator>
         </NavigationContainer>
-    </IconComponentProvider>
-  );
+    )
 }
