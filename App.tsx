@@ -10,6 +10,7 @@ import Camera from "./views/Camera";
 import Chat from "./views/Chat";
 import Chatlist from "./views/Chatlist";
 import Connect from "./views/Connect";
+import InitialLoad from "./views/InitialLoad";
 import { ChatParams } from "./views/RootStackParams";
 
 const Stack = createNativeStackNavigator();

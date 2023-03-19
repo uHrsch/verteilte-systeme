@@ -4,7 +4,7 @@ import { StyleSheet, Text,  View } from "react-native";
 import FloatingActionButton from "../components/FloatingActionButton";
 import QrCodeWithWrapper from "../components/QrCodeWithWrapper";
 import { defaultStyles } from "../styles/styles";
-import { getLocalInformation } from "../util/GenerateQRCode";
+import { getLocalInformation } from "../util/generateQRCode";
 import { RootStackParamList } from "./RootStackParams";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
