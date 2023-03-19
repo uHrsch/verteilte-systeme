@@ -7,6 +7,11 @@ function ChangeNameModal({isOpened, close, changeName, name}: {isOpened: boolean
 
     const [value, setValue] = useState(name)
 
+    const editAndClose = () => {
+        changeName(value)
+        close()
+    }
+
     return (
         <Modal 
             visible={isOpened}
@@ -39,9 +44,10 @@ function ChangeNameModal({isOpened, close, changeName, name}: {isOpened: boolean
                             marginVertical: 15,
                             borderRadius: 5,
                         }}
+                        onSubmitEditing={editAndClose}
                     />
                     <Pressable 
-                        onPress={close}
+                        onPress={editAndClose}
                         style={{
                             ...defaultStyles.primaryContainer,
                             padding: 10,
