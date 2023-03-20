@@ -6,6 +6,5 @@ export type RootStackParamList = {
 };
 
 export type ChatParams = {
-    ip?: string
     id: string,
 }

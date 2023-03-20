@@ -7,6 +7,8 @@ import ChangeNameModal from "../components/ChangeNameModal";
 import { useEditIconContext } from "../contexts/EditIconContext";
 import { useStorageContext } from "../contexts/StorageContext";
 import LoadingSpinner from "../components/LoadingSpinner";
+import { useConnectionContext } from "../contexts/ConnectionContext";
+import { useNavigation } from "@react-navigation/native";
 
 const styles = StyleSheet.create({
     container: {
@@ -50,25 +52,37 @@ const styles = StyleSheet.create({
     }
 })
 
-function Chat({id, ip}: ChatParams) {
+function Chat({id}: ChatParams) {
 
     const [input, setInput] = useState("")
     
+    const { isConnected, disconnect } = useConnectionContext()
     const { isOpened, close } = useEditIconContext()
     const { setConversation, storeMessage: sendMessageInternal, getName ,getMessages, changeName } = useStorageContext()
     const messages = getMessages()
+    const navigation = useNavigation()
 
     useEffect(() => {
-        setConversation(id)
+        (async () => {
+            await setConversation(id)
+            const name = await getName(id)
+            navigation.setOptions({title: `Chat: ${name}`})
+        })()
 
         return () => {
             setConversation(null)
+            disconnect()
         }
     }, [])
 
     const sendMessage = () => {
         sendMessageInternal(input)
         setInput("")
+    }
+
+    const changeNameInternal = (newName: string) => {
+        navigation.setOptions({title: `Chat: ${newName}`})
+        changeName(newName)
     }
 
     return (
@@ -97,7 +111,7 @@ function Chat({id, ip}: ChatParams) {
             )}
 
             
-            {ip !== undefined || true && (
+            {isConnected && (
                 <View style={styles.inputContainer}>
                     <TextInput
                         placeholder="Input your message"
@@ -115,8 +129,7 @@ function Chat({id, ip}: ChatParams) {
                     </View>
                 </View>
             )}
-            {/*getName(id)*/}
-            <ChangeNameModal name={`TODO`} isOpened={isOpened} close={close} changeName={changeName}/>
+            <ChangeNameModal id={id} isOpened={isOpened} close={close} changeName={changeNameInternal}/>
         </KeyboardAvoidingView>
     )
 }

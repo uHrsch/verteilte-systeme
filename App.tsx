@@ -10,7 +10,6 @@ import Camera from "./views/Camera";
 import Chat from "./views/Chat";
 import Chatlist from "./views/Chatlist";
 import Connect from "./views/Connect";
-import InitialLoad from "./views/InitialLoad";
 import { ChatParams } from "./views/RootStackParams";
 
 const Stack = createNativeStackNavigator();
@@ -50,8 +49,8 @@ function Navigation() {
                 <Stack.Screen name="Camera" component={Camera} />
                 <Stack.Screen 
                     name="Chat" 
-                    options={({ route }) => ({ 
-                        title: `Chat: ${getName((route.params as ChatParams).id)}`,
+                    options={() => ({ 
+                        title: `Chat:`,
                         headerRight: () => (
                             <Pressable onPress={open}>
                                 <Icon name="pencil" size={24} color="white"/>
@@ -61,7 +60,6 @@ function Navigation() {
                 >
                     {props =>(
                         <Chat 
-                            ip={(props.route.params as ChatParams).ip} 
                             id={(props.route.params as ChatParams).id} 
                             {...props}/>
                     )}

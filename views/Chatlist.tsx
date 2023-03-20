@@ -1,6 +1,6 @@
-import { useNavigation } from "@react-navigation/core";
+import { useFocusEffect, useNavigation } from "@react-navigation/core";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View, FlatList, Text, Pressable} from 'react-native';
 import FloatingActionButton from "../components/FloatingActionButton";
 import LoadingSpinner from "../components/LoadingSpinner";
@@ -45,19 +45,21 @@ const Chatlist = () => {
         navigation.navigate("Chat", {id: id})
     }
 
-    useEffect(() => {
-        (async () => {
-            const ids = await getConversationIds()
-            const namesPromise = ids.map(id => getName(id))
-            const names = await Promise.all(namesPromise)
+    useFocusEffect(
+        useCallback(() => {loadChats()}, [])
+    )
 
-            const data = ids.map((id, index) => ({
-                id,
-                name: names[index]
-            }))
-            setChats(data)
-        })()
-    }, [])
+    const loadChats = async () => {
+        const ids = await getConversationIds()
+        const namesPromise = ids.map(id => getName(id))
+        const names = await Promise.all(namesPromise)
+
+        const data = ids.map((id, index) => ({
+            id,
+            name: names[index]
+        }))
+        setChats(data)
+    }
 
     return (
         <View style={{
