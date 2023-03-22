@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from "react"
 import TcpSocket from "react-native-tcp-socket"
 import { MessageDTO } from "../types/message"
+import { getPublicKey } from "../util/keygen"
 
 type ConnectionContextType = {
     openServer: () => void,
@@ -85,6 +86,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         })
 
         setSocket(client)
+        answerConnection(ip, publicKey);
     }
 
     const disconnect = () => {
@@ -101,6 +103,16 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             type: "message",
             message,
         })) //TODO encryption
+    }
+
+    const answerConnection = (ip: string, publicKey: string) => {
+        getPublicKey()
+        .then((text) => {
+            const timestamp: number = Date.now();
+            const connectionAck: MessageDTO = {text, timestamp}
+            sendMessage(connectionAck)
+        });
+
     }
 
     const on = (_callback: (message: MessageDTO) => void) => {
