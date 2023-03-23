@@ -2,6 +2,7 @@ import { createContext, useContext, useState } from "react"
 import TcpSocket from "react-native-tcp-socket"
 import { MessageDTO } from "../types/message"
 import { getPublicKey } from "../util/keygen"
+import { decrypt, encrypt } from '../util/encryptionUtils'
 
 type ConnectionContextType = {
     openServer: () => void,
@@ -31,10 +32,11 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
     const [callback, setCallback] = useState<((message: MessageDTO) => void) | null>()
     const [socket, setSocket] = useState<TcpSocket.Socket | null>(null)
+    const [pubKey, setPubKey] = useState<string | null>()
 
     const openServer = () => {
         if(socket != null) {
-            socket.destroy()
+            disconnect()
         }
 
         TcpSocket.createServer((socket) => {
@@ -44,24 +46,25 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             socket.on("data", (rawData) => {
                 const { type, data } = JSON.parse(rawData.toString())
 
-                if(type === "message" && callback) {
-                    callback(data as MessageDTO)
-                } 
+                proccessIncomingTextMessage(type, data)
+
+                if(type === "pubKey") {
+                  setPubKey(data)
+                }
             })
 
             socket.on("error", () => {
-                socket.destroy()
-                setSocket(null)
+                disconnect()
             })
             socket.on("close", () => {
-                setSocket(null)
+                disconnect()
             })
         }).listen({port: 80, host: "0.0.0.0"})
     }
 
     const connect = (ip: string, publicKey: string) => {
         if(socket != null) {
-            socket.destroy()
+            disconnect()
         }
 
         const options = {
@@ -74,15 +77,12 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             client.on("data", (rawData) => {
                 const { type, data } = JSON.parse(rawData.toString())
 
-                if(type === "message" && callback) {
-                    callback(data as MessageDTO)
-                } 
+                proccessIncomingTextMessage(type, data)
             })
         })
-        client.on("close", () => setSocket(null))
+        client.on("close", () => disconnect())
         client.on("error", () => {
-            socket?.destroy()
-            setSocket(null)
+            disconnect()
         })
 
         setSocket(client)
@@ -90,27 +90,35 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
     }
 
     const disconnect = () => {
+        setPubKey(null)
+
         if(socket == null) return;
 
-        socket.destroy();
+        if(!socket.destroyed){
+            socket.destroy()
+        }
+        
         setSocket(null)
     }
 
-    const sendMessage = (message: MessageDTO) => {
-        if(socket == null) return;
+    const sendMessage = async (message: MessageDTO) => {
+        if(socket == null || pubKey == null) return;
+        const encryptedMessage = await encrypt(JSON.stringify(message), pubKey);
 
         socket.write(JSON.stringify({
             type: "message",
-            message,
-        })) //TODO encryption
+            data: encryptedMessage,
+        })) 
     }
 
     const answerConnection = (ip: string, publicKey: string) => {
         getPublicKey()
         .then((text) => {
             const timestamp: number = Date.now();
-            const connectionAck: MessageDTO = {text, timestamp}
-            sendMessage(connectionAck)
+            socket?.write(JSON.stringify({
+                type: "pubKey",
+                data: text,
+            }))
         });
 
     }
@@ -124,6 +132,18 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
     }
 
     const isConnected = socket != null;
+
+    const proccessIncomingTextMessage = (type: string, data: string) => {
+        if(type === "message" && callback) {
+            decrypt(data)
+            .then(
+                decryptedMessage => JSON.parse(decryptedMessage)        
+            )
+            .then(
+                message => callback(message as MessageDTO)
+            )
+        } 
+    }
 
     return (
         <ConnectionContext.Provider value={{
