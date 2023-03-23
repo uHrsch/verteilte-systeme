@@ -56,7 +56,7 @@ function Chat({id}: ChatParams) {
 
     const [input, setInput] = useState("")
     
-    const { isConnected, disconnect } = useConnectionContext()
+    const { connectionStatus, disconnect } = useConnectionContext()
     const { isOpened, close } = useEditIconContext()
     const { setConversation, storeMessage: sendMessageInternal, getName ,getMessages, changeName } = useStorageContext()
     const messages = getMessages()
@@ -111,7 +111,7 @@ function Chat({id}: ChatParams) {
             )}
 
             
-            {isConnected && (
+            {connectionStatus && (
                 <View style={styles.inputContainer}>
                     <TextInput
                         placeholder="Input your message"

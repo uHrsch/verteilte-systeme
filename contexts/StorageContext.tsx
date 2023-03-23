@@ -160,10 +160,14 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
 
     const setMessageHistory = (message: Message) => {
         //TODO local storage
-        setMessages(m => [
-            message,
-            ...(m ||[]),
-        ])
+        setMessages(oldMessages => {
+            const newMessages = [
+                message,
+                ...(oldMessages ||[]),
+            ]
+            AsyncStorage.setItem(`chat.${conversation}`, JSON.stringify(newMessages))
+            return newMessages
+        })
     }
 
     const changeName = (name: string) => {
