@@ -11,8 +11,14 @@ type ConnectionContextType = {
     sendMessage: (message: MessageDTO) => void,
     on: (callback: (message: MessageDTO) => void) => void,
     off: () => void,
-    isConnected: boolean
+    connectionStatus: ConnectionStatus
 }
+
+enum ConnectionStatus {
+    DISCONNECTED,
+    CONNECTING,
+    CONNECTED
+};
 
 const defaultValues:ConnectionContextType = {
     openServer: () => {},
@@ -21,7 +27,7 @@ const defaultValues:ConnectionContextType = {
     sendMessage: () => {},
     on: () => {},
     off: () => {},
-    isConnected: false,
+    connectionStatus: ConnectionStatus.DISCONNECTED,
 }
 
 const ConnectionContext = createContext<ConnectionContextType>(defaultValues)
@@ -131,7 +137,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         setCallback(null)
     }
 
-    const isConnected = socket != null;
+    const connectionStatus = (socket == null) ? ConnectionStatus.DISCONNECTED : (pubKey == null ? ConnectionStatus.CONNECTING : ConnectionStatus.CONNECTED);
 
     const proccessIncomingTextMessage = (type: string, data: string) => {
         if(type === "message" && callback) {
@@ -153,7 +159,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             sendMessage,
             on,
             off,
-            isConnected,
+            connectionStatus,
         }}>
             {children}
         </ConnectionContext.Provider>
