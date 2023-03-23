@@ -49,72 +49,10 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
         }
     }, [])
 
-    const loadMessages = (id: string) => {
-        return [{
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: true,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: false,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: true,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: false,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: true,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: false,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: true,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: false,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: true,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: false,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: true,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: false,
-            timestamp: 0,
-        },
-        {
-            text: "Lorem ipsum dolor sit amet consectetur adipisicing elit. Libero doloribus ratione in temporibus dignissimos, consectetur magnam iusto, neque porro sapiente quos nemo ab animi ipsa debitis veniam incidunt unde quibusdam.",
-            self: true,
-            timestamp: 0,
-        }]
+    const loadMessages = async (id: string) => {
+        const loadedMessages = await AsyncStorage.getItem(`chat.${id}`) ?? "[]"
+        const loadedChat =  JSON.parse(loadedMessages)
+        return loadedChat
     }
 
     const loadName = async (id: string) => {
@@ -139,7 +77,7 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
         }
 
         _setConversation(id)
-        setMessages(loadMessages(id))
+        setMessages(await loadMessages(id))
         setName(await loadName(id))
     }
 
