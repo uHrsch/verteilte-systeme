@@ -14,7 +14,7 @@ type ConnectionContextType = {
     connectionStatus: ConnectionStatus
 }
 
-enum ConnectionStatus {
+export enum ConnectionStatus {
     DISCONNECTED,
     CONNECTING,
     CONNECTED

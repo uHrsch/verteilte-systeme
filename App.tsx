@@ -42,7 +42,7 @@ function Navigation() {
             },
             dark: true,
         }}>
-            <StatusBar/>
+            <StatusBar backgroundColor={"#232a2f"}/>
             <Stack.Navigator initialRouteName="Chats">
                 <Stack.Screen name="Chats" component={Chatlist} />
                 <Stack.Screen name="Connect" component={Connect} />
@@ -50,7 +50,7 @@ function Navigation() {
                 <Stack.Screen 
                     name="Chat" 
                     options={() => ({ 
-                        title: `Chat:`,
+                        title: `Chat`,
                         headerRight: () => (
                             <Pressable onPress={open}>
                                 <Icon name="pencil" size={24} color="white"/>

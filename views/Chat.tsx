@@ -7,8 +7,7 @@ import ChangeNameModal from "../components/ChangeNameModal";
 import { useEditIconContext } from "../contexts/EditIconContext";
 import { useStorageContext } from "../contexts/StorageContext";
 import LoadingSpinner from "../components/LoadingSpinner";
-import { useConnectionContext } from "../contexts/ConnectionContext";
-import { useNavigation } from "@react-navigation/native";
+import { ConnectionStatus, useConnectionContext } from "../contexts/ConnectionContext";
 
 const styles = StyleSheet.create({
     container: {
@@ -60,13 +59,11 @@ function Chat({id}: ChatParams) {
     const { isOpened, close } = useEditIconContext()
     const { setConversation, storeMessage: sendMessageInternal, getName ,getMessages, changeName } = useStorageContext()
     const messages = getMessages()
-    const navigation = useNavigation()
 
     useEffect(() => {
         (async () => {
             await setConversation(id)
             const name = await getName(id)
-            navigation.setOptions({title: `Chat: ${name}`})
         })()
 
         return () => {
@@ -81,7 +78,6 @@ function Chat({id}: ChatParams) {
     }
 
     const changeNameInternal = (newName: string) => {
-        navigation.setOptions({title: `Chat: ${newName}`})
         changeName(newName)
     }
 
@@ -111,7 +107,7 @@ function Chat({id}: ChatParams) {
             )}
 
             
-            {connectionStatus && (
+            {connectionStatus==ConnectionStatus.CONNECTED && (
                 <View style={styles.inputContainer}>
                     <TextInput
                         placeholder="Input your message"
