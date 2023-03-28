@@ -56,8 +56,18 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
     }
 
     const loadName = async (id: string) => {
-        const nameOrNull = await AsyncStorage.getItem(`name.${id}`)
-        if(nameOrNull == null) return id;
+        const storageKey = `name.${id}`
+        const nameBeforeNullCheck = await AsyncStorage.getItem(storageKey)
+        if(nameBeforeNullCheck == null) {
+            const newIndex = await (await getConversationIds()).length + 1
+            setNameInternal(id, `Chat ${newIndex}`)
+        }
+
+        const nameOrNull = await AsyncStorage.getItem(storageKey)
+
+        if(nameOrNull == null) {
+            return "Error 2"
+        }
 
         return nameOrNull
     }
@@ -97,7 +107,6 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
     }
 
     const setMessageHistory = (message: Message) => {
-        //TODO local storage
         setMessages(oldMessages => {
             const newMessages = [
                 message,
@@ -111,9 +120,14 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
     const changeName = (name: string) => {
         if(conversation == null) return;
 
-        AsyncStorage.setItem(`name.${conversation}`, name)
+        setNameInternal(conversation, name)
         setName(name)
     }
+
+    const setNameInternal = async (id: string, name: string) => {
+        await AsyncStorage.setItem(`name.${id}`, name)
+    }
+
     const getMessages = () => messages
     const getName = async (id?: string) => {
         if(id === undefined) {
