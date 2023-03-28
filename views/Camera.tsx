@@ -44,10 +44,15 @@ const Camera = () => {
     }, [])
 
     const handleBarCodeScanned = ({data}: BarCodeScannerResult) => {
-        setScanned(true);
-        const {localIp, pubKey} = JSON.parse(data)
-        // connect(localIp, pubKey) TODO does not work with expo
-        navigation.navigate("Chat", {id: pubKey})
+        try {
+            const {localIp, pubKey} = JSON.parse(data)
+            setScanned(true);
+
+            connect(localIp, pubKey)
+            navigation.navigate("Chat", {id: pubKey})
+        } catch(e) {
+
+        }
     }
 
     if(hasPermission == "NOT_SET") {

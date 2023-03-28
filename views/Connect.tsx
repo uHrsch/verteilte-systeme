@@ -9,6 +9,7 @@ import { RootStackParamList } from "./RootStackParams";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import * as Brightness from 'expo-brightness';
+import { useConnectionContext } from "../contexts/ConnectionContext";
 
 const styles = StyleSheet.create({
     container: {
@@ -26,7 +27,7 @@ function Connect() {
     const navigation = useNavigation<connectProps>();
     const [qrCodeInfo, setQrCodeInfo] = useState<string|undefined|null>(undefined)
 
-    // const { openServer } = useConnectionContext() TODO does not work with expo
+    const { openServer } = useConnectionContext()
 
     useEffect(() => {
         (async () => {
@@ -35,7 +36,7 @@ function Connect() {
                 setQrCodeInfo(null)
                 return;
             }
-            // openServer() TODO does not work with expo
+            openServer()
             setQrCodeInfo(JSON.stringify(localInfo))
 
             Brightness.setBrightnessAsync(1);
