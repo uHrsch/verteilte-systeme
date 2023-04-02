@@ -1,8 +1,9 @@
-import { ActivityIndicator, Modal, Text, TextInput, View } from "react-native"
+import { Modal, Text, TextInput, View } from "react-native"
 import { useEffect, useState } from "react"
 import { Pressable } from "@react-native-material/core"
 import { defaultStyles } from "../styles/styles"
 import { useStorageContext } from "../contexts/StorageContext"
+import { LoadingSpinnerUnstyled } from "./LoadingSpinner"
 
 function ChangeNameModal({isOpened, close, changeName, id}: {isOpened: boolean, close: () => void, changeName: (name: string) => void, id: string}) {
 
@@ -44,10 +45,7 @@ function ChangeNameModal({isOpened, close, changeName, id}: {isOpened: boolean, 
                         fontSize: 20
                     }}>Change name:</Text>
                     {value === null ? (
-                        <ActivityIndicator
-                        size={50}
-                        color="white"
-                    />
+                        <LoadingSpinnerUnstyled/>
                     ) : (
                         <>
                             <TextInput

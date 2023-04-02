@@ -1,5 +1,5 @@
 import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
-import { Icon, IconComponentProvider, Pressable } from "@react-native-material/core";
+import { Icon, IconComponentProvider, Pressable, ThemeProvider } from "@react-native-material/core";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'react-native';
@@ -11,6 +11,7 @@ import Chat from "./views/Chat";
 import Chatlist from "./views/Chatlist";
 import Connect from "./views/Connect";
 import { ChatParams } from "./views/RootStackParams";
+import Settings from "./views/Settings";
 
 const Stack = createNativeStackNavigator();
 
@@ -28,7 +29,6 @@ export default function App() {
 function Navigation() {
 
     const { open } = useEditIconContext()
-    const { getName } = useStorageContext()
 
     return (
         <NavigationContainer theme={{
@@ -42,15 +42,22 @@ function Navigation() {
             },
             dark: true,
         }}>
-            <StatusBar/>
+            <StatusBar backgroundColor={"#232a2f"}/>
             <Stack.Navigator initialRouteName="Chats">
-                <Stack.Screen name="Chats" component={Chatlist} />
+                <Stack.Screen name="Chats" component={Chatlist} options={(e) => ({
+                    headerRight: () => (
+                        <Pressable onPress={() => {e.navigation.navigate("Settings")}}>
+                            <Icon name="cog" size={24} color="white"/>
+                        </Pressable>
+                    )
+                })}
+                />
                 <Stack.Screen name="Connect" component={Connect} />
                 <Stack.Screen name="Camera" component={Camera} />
                 <Stack.Screen 
                     name="Chat" 
                     options={() => ({ 
-                        title: `Chat:`,
+                        title: `Chat`,
                         headerRight: () => (
                             <Pressable onPress={open}>
                                 <Icon name="pencil" size={24} color="white"/>
@@ -64,6 +71,7 @@ function Navigation() {
                             {...props}/>
                     )}
                 </Stack.Screen>
+                <Stack.Screen name="Settings" component={Settings} />
             </Stack.Navigator>
         </NavigationContainer>
     )
