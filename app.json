@@ -9,7 +9,7 @@
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#232a2f"
     },
     "assetBundlePatterns": [
       "**/*"
@@ -20,12 +20,17 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#232a2f"
       },
       "package": "de.dhbw.verteiltesysteme"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "51617ffa-ebf6-4a34-9552-f262fa49493a"
+      }
     }
   }
 }
