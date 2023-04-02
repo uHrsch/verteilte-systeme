@@ -1,12 +1,13 @@
 import { BarCodeScanner, BarCodeScannerResult } from "expo-barcode-scanner";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View, Text} from 'react-native';
 import { defaultStyles } from "../styles/styles";
 import QrCodeScannerImage from "../assets/qrcode.svg"
-import { useConnectionContext } from "../contexts/ConnectionContext";
-import { useNavigation } from "@react-navigation/native";
+import { ConnectionStatus, useConnectionContext } from "../contexts/ConnectionContext";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "./RootStackParams";
+import { LoadingSpinnerUnstyled } from "../components/LoadingSpinner";
 
 const styles = StyleSheet.create({
     container: {
@@ -31,9 +32,12 @@ const Camera = () => {
     const [hasPermission, setHasPermission] = useState<Permission>("NOT_SET")
     const [scanned, setScanned] = useState(false)
 
-    const { connect } = useConnectionContext()
+    const { connect, connectionStatus, pubKey } = useConnectionContext()
     const navigation = useNavigation<cameraProp>()
 
+    useFocusEffect(useCallback(() => {
+        setScanned(false)
+    }, []))
     useEffect(() => {
         const getBarCodeScannerPermissions = async () => {
             const { status } = await BarCodeScanner.requestPermissionsAsync();
@@ -49,11 +53,19 @@ const Camera = () => {
             setScanned(true);
 
             connect(localIp, pubKey)
-            navigation.navigate("Chat", {id: pubKey})
+            
         } catch(e) {
 
         }
     }
+
+    useEffect(() => {
+
+        if(connectionStatus == ConnectionStatus.CONNECTED && pubKey != null) {
+            navigation.navigate("Chat", {id: pubKey})
+        }
+
+    }, [connectionStatus, pubKey])
 
     if(hasPermission == "NOT_SET") {
         return (
@@ -88,6 +100,9 @@ const Camera = () => {
             ...defaultStyles.container,
             ...styles.container
         }}>
+            { scanned && (
+                <LoadingSpinnerUnstyled/>
+            )}
             <BarCodeScanner
                 onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
                 style={StyleSheet.absoluteFillObject}

@@ -3,6 +3,7 @@ export type RootStackParamList = {
     Camera: undefined;
     Connect: undefined;
     Chat: ChatParams;
+    Settings: undefined;
 };
 
 export type ChatParams = {

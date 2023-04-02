@@ -18,4 +18,13 @@ function LoadingSpinner() {
     )
 }
 
+export function LoadingSpinnerUnstyled() {
+    return (
+        <ActivityIndicator
+            size={50}
+            color="white"
+        />
+    )
+}
+
 export default LoadingSpinner

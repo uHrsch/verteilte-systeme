@@ -8,6 +8,7 @@ import { useEditIconContext } from "../contexts/EditIconContext";
 import { useStorageContext } from "../contexts/StorageContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { ConnectionStatus, useConnectionContext } from "../contexts/ConnectionContext";
+import { useSendMessageContext } from "../contexts/SendMessageContext";
 
 const styles = StyleSheet.create({
     container: {
@@ -57,7 +58,8 @@ function Chat({id}: ChatParams) {
     
     const { connectionStatus, disconnect } = useConnectionContext()
     const { isOpened, close } = useEditIconContext()
-    const { setConversation, storeMessage: sendMessageInternal, getName ,getMessages, changeName } = useStorageContext()
+    const { setConversation, getName ,getMessages, changeName } = useStorageContext()
+    const { sendMessage: sendMessageInternal } = useSendMessageContext()
     const messages = getMessages()
 
     useEffect(() => {

@@ -1,26 +1,25 @@
-import { createContext, useContext, useEffect, useState } from "react"
+import { createContext, useContext, useState } from "react"
 import { Message } from "../types/message"
 import AsyncStorage from "@react-native-async-storage/async-storage"
-import { useConnectionContext } from "./ConnectionContext"
 
 type StorageContextType = {
     getConversationIds: () => Promise<string[]>
     setConversation: (id: string  | null) => Promise<void>,
-    activeConversation: string | null,
-    storeMessage: (text: string) => void,
+    setMessageHistory: (message: Message) => void,
     changeName: (newName: string) => void,
     getMessages: () => Message[] | null,
     getName: (id?: string) => Promise<string>,
+    deleteAll: () => Promise<void>,
 }
 
 const defaultValues:StorageContextType = {
     getConversationIds: async () => [],
     setConversation: async ()  => {},
-    activeConversation: null,
-    storeMessage: () => {},
+    setMessageHistory: () => {},
     changeName: () => {},
     getMessages: () => null,
     getName: async () => "Error",
+    deleteAll: async () => {},
 }
 
 const StorageContext = createContext<StorageContextType>(defaultValues)
@@ -32,22 +31,6 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
     const [conversation, _setConversation] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[] | null>(null)
     const [name, setName] = useState<string | null>(null)
-
-    const { sendMessage, off, on } = useConnectionContext()
-
-    useEffect(() => {
-        on((message) => {
-            setMessageHistory({
-                self: false,
-                text: message.text,
-                timestamp: message.timestamp
-            })
-        })
-
-        return () => {
-            off()
-        }
-    }, [])
 
     const loadMessages = async (id: string) => {
         const loadedMessages = await AsyncStorage.getItem(`chat.${id}`) ?? "[]"
@@ -68,17 +51,18 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
         if(nameOrNull == null) {
             return "Error 2"
         }
-
         return nameOrNull
     }
 
     const getConversationIds = async () => {
-        return (await AsyncStorage.getAllKeys())
-            .filter(e => e.startsWith("chat."))
-            .map(e => e.substring("chat.".length))
+        const keys = await AsyncStorage.getAllKeys()
+        const chats = keys.filter(e => e.startsWith("chat."))
+        const ids = chats.map(e => e.substring("chat.".length))
+        return ids
     }
 
     const setConversation = async (id: string | null) => {
+        
         if(id === null) {
             _setConversation(null)
             setMessages(null)
@@ -91,30 +75,19 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
         setName(await loadName(id))
     }
 
-    const storeMessageText = (text: string) => {
-        const message:Message = {
-            text,
-            self: true,
-            timestamp: new Date().getTime()
-        }
-        
-        storeMessage(message)
-    }
-
-    const storeMessage = (message: Message) => {
-        sendMessage(message)
-        setMessageHistory(message)
-    }
-
     const setMessageHistory = (message: Message) => {
-        setMessages(oldMessages => {
-            const newMessages = [
-                message,
-                ...(oldMessages ||[]),
-            ]
-            AsyncStorage.setItem(`chat.${conversation}`, JSON.stringify(newMessages))
-            return newMessages
+        _setConversation((conversationId) => {
+            setMessages(oldMessages => {
+                const newMessages = [
+                    message,
+                    ...(oldMessages ||[]),
+                ]
+                AsyncStorage.setItem(`chat.${conversationId}`, JSON.stringify(newMessages))
+                return newMessages
+            })
+            return conversationId
         })
+        
     }
 
     const changeName = (name: string) => {
@@ -137,15 +110,21 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
         return await loadName(id)
     }
 
+    const deleteAll = async () => {
+        const keys = (await AsyncStorage.getAllKeys())
+            .filter(e => e.startsWith("chat.") || e.startsWith("name."))
+        AsyncStorage.multiRemove(keys)
+    }
+
     return (
         <StorageContext.Provider value={{
             getConversationIds,
             setConversation,
-            activeConversation: conversation,
-            storeMessage: storeMessageText,
+            setMessageHistory,
             changeName,
             getMessages,
-            getName
+            getName,
+            deleteAll
         }}>
             {children}
         </StorageContext.Provider>

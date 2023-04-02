@@ -1,17 +1,18 @@
 import { createContext, useContext, useState } from "react"
 import TcpSocket from "react-native-tcp-socket"
-import { MessageDTO } from "../types/message"
+import { Message, MessageDTO } from "../types/message"
 import { getPublicKey } from "../util/keygen"
 import { decrypt, encrypt } from '../util/encryptionUtils'
+import { getLocalInformation } from "../util/generateQRCode"
+import { useStorageContext } from "./StorageContext"
 
 type ConnectionContextType = {
     openServer: () => void,
     connect: (ip: string, publicKey: string) => void,
     disconnect: () => void,
     sendMessage: (message: MessageDTO) => void,
-    on: (callback: (message: MessageDTO) => void) => void,
-    off: () => void,
-    connectionStatus: ConnectionStatus
+    connectionStatus: ConnectionStatus,
+    pubKey: string |null,
 }
 
 export enum ConnectionStatus {
@@ -25,37 +26,47 @@ const defaultValues:ConnectionContextType = {
     connect: () => {},
     disconnect: () => {},
     sendMessage: () => {},
-    on: () => {},
-    off: () => {},
     connectionStatus: ConnectionStatus.DISCONNECTED,
+    pubKey: null,
 }
 
 const ConnectionContext = createContext<ConnectionContextType>(defaultValues)
 
 export const useConnectionContext = () => useContext(ConnectionContext)
+let serverSocket:TcpSocket.Server | null = null;
+let clientSocket:TcpSocket.Socket | null = null;
+
+function isSocketConnected() {
+    return serverSocket != null || clientSocket != null
+}
 
 function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
-    const [callback, setCallback] = useState<((message: MessageDTO) => void) | null>()
-    const [socket, setSocket] = useState<TcpSocket.Socket | null>(null)
-    const [pubKey, setPubKey] = useState<string | null>()
+    const [connectionStatus, setConnectionStatus] = useState(ConnectionStatus.DISCONNECTED);
+    const [pubKey, setPubKey] = useState<string | null>(null)
 
-    const openServer = () => {
-        if(socket != null) {
+    const { setMessageHistory } = useStorageContext()
+
+    const openServer = async () => {
+        if(isSocketConnected()) {
             disconnect()
         }
 
-        TcpSocket.createServer((socket) => {
+        const localInformation = await getLocalInformation()
 
-            setSocket(socket)
+        serverSocket = TcpSocket.createServer((socket) => {
+
+            clientSocket = socket
 
             socket.on("data", (rawData) => {
+                
                 const { type, data } = JSON.parse(rawData.toString())
 
                 proccessIncomingTextMessage(type, data)
 
                 if(type === "pubKey") {
                   setPubKey(data)
+                  setConnectionStatus(ConnectionStatus.CONNECTED)
                 }
             })
 
@@ -65,89 +76,90 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             socket.on("close", () => {
                 disconnect()
             })
-        }).listen({port: 80, host: "0.0.0.0"})
+        }).listen({port: 9090, host: localInformation?.localIp ?? "0.0.0.0"})
+
+        serverSocket.on("listening", () => {
+            setConnectionStatus(ConnectionStatus.CONNECTING)
+        })
+        serverSocket.on("close", disconnect)
+        serverSocket.on("error", disconnect)
     }
 
-    const connect = (ip: string, publicKey: string) => {
-        if(socket != null) {
+    const connect = async (ip: string, publicKey: string) => {
+        if(isSocketConnected()) {
             disconnect()
         }
 
+        setPubKey(publicKey)
+        setConnectionStatus(ConnectionStatus.CONNECTING)
+        const localInformation = await getLocalInformation()
+
         const options = {
-            port: 80,
+            port: 9090,
             host: ip,
-            localAddress: "127.0.0.1",
+            localAddress: localInformation?.localIp ?? "127.0.0.1",
         }
 
-        const client = TcpSocket.createConnection(options, () => {
-            client.on("data", (rawData) => {
+        clientSocket = TcpSocket.createConnection(options, () => {   
+            answerConnection();
+            setConnectionStatus(ConnectionStatus.CONNECTED)
+            
+            clientSocket?.on("data", (rawData) => {                
                 const { type, data } = JSON.parse(rawData.toString())
 
                 proccessIncomingTextMessage(type, data)
             })
         })
-        client.on("close", () => disconnect())
-        client.on("error", () => {
-            disconnect()
-        })
-
-        setSocket(client)
-        answerConnection(ip, publicKey);
+        clientSocket.on("close", disconnect)
+        clientSocket.on("error", disconnect)
     }
 
-    const disconnect = () => {
+    const disconnect = () => {        
         setPubKey(null)
+        setConnectionStatus(ConnectionStatus.DISCONNECTED)
 
-        if(socket == null) return;
-
-        if(!socket.destroyed){
-            socket.destroy()
+        if(clientSocket != null) {
+            clientSocket.destroy()
+            clientSocket = null;
         }
-        
-        setSocket(null)
+        if(serverSocket != null) {
+            serverSocket.close()
+            serverSocket = null;
+        }
     }
 
     const sendMessage = async (message: MessageDTO) => {
-        if(socket == null || pubKey == null) return;
+        if(clientSocket == null || pubKey == null) return;
         const encryptedMessage = await encrypt(JSON.stringify(message), pubKey);
 
-        socket.write(JSON.stringify({
+        clientSocket.write(JSON.stringify({
             type: "message",
             data: encryptedMessage,
         })) 
     }
 
-    const answerConnection = (ip: string, publicKey: string) => {
-        getPublicKey()
-        .then((text) => {
-            const timestamp: number = Date.now();
-            socket?.write(JSON.stringify({
-                type: "pubKey",
-                data: text,
-            }))
-        });
+    const answerConnection = async () => {
+        if(clientSocket == null) return;
 
+        const pubKey = await getPublicKey()
+        clientSocket.write(JSON.stringify({
+            type: "pubKey",
+            data: pubKey,
+        }))
     }
 
-    const on = (_callback: (message: MessageDTO) => void) => {
-        setCallback(() => _callback)
-    }
+    const proccessIncomingTextMessage = async (type: string, data: string) => {
+        if(type === "message") {
+            const decryptedMessage = await decrypt(data)
+            const decryptedJsonMessage:MessageDTO = JSON.parse(decryptedMessage)
 
-    const off = () => {
-        setCallback(null)
-    }
+            const message: Message = {
+                self: false,
+                text: decryptedJsonMessage.text,
+                timestamp: decryptedJsonMessage.timestamp
+            }
 
-    const connectionStatus = (socket == null) ? ConnectionStatus.DISCONNECTED : (pubKey == null ? ConnectionStatus.CONNECTING : ConnectionStatus.CONNECTED);
-
-    const proccessIncomingTextMessage = (type: string, data: string) => {
-        if(type === "message" && callback) {
-            decrypt(data)
-            .then(
-                decryptedMessage => JSON.parse(decryptedMessage)        
-            )
-            .then(
-                message => callback(message as MessageDTO)
-            )
+            setMessageHistory(message)
         } 
     }
 
@@ -157,9 +169,8 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             connect,
             disconnect,
             sendMessage,
-            on,
-            off,
             connectionStatus,
+            pubKey,
         }}>
             {children}
         </ConnectionContext.Provider>
