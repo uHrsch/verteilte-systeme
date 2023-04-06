@@ -12,6 +12,8 @@ import Chatlist from "./views/Chatlist";
 import Connect from "./views/Connect";
 import { ChatParams } from "./views/RootStackParams";
 import Settings from "./views/Settings";
+import React from "react";
+import{ Menu, MenuTrigger} from "react-native-popup-menu";
 
 const Stack = createNativeStackNavigator();
 
@@ -29,6 +31,7 @@ export default function App() {
 function Navigation() {
 
     const { open } = useEditIconContext()
+    const { group } = useCreateGroupContext() 
 
     return (
         <NavigationContainer theme={{
@@ -59,9 +62,17 @@ function Navigation() {
                     options={() => ({ 
                         title: `Chat`,
                         headerRight: () => (
-                            <Pressable onPress={open}>
-                                <Icon name="pencil" size={24} color="white"/>
-                            </Pressable>
+                            <Menu>
+                                <MenuTrigger>
+                                    <Icon name="dots-vertical" size={24} color="white"/>
+                                </MenuTrigger>
+                                <Pressable onPress={ open }>
+                                    <Icon name="pencil" size={24} color={"white"}/>
+                                </Pressable>
+                                <Pressable onPress={ group }>
+                                    <Icon name="account-group" size={24} color={"white"}/>
+                                </Pressable>
+                            </Menu>
                         )
                     })}
                 >

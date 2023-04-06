@@ -36,6 +36,8 @@ export const useConnectionContext = () => useContext(ConnectionContext)
 let serverSocket:TcpSocket.Server | null = null;
 let clientSocket:TcpSocket.Socket | null = null;
 
+export function getClientSocket(){ return clientSocket};
+
 function isSocketConnected() {
     return serverSocket != null || clientSocket != null
 }
@@ -68,6 +70,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
                   setPubKey(data)
                   setConnectionStatus(ConnectionStatus.CONNECTED)
                 }
+                //type für groupchat und daten weitergeben
             })
 
             socket.on("error", () => {
@@ -86,6 +89,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
     }
 
     const connect = async (ip: string, publicKey: string) => {
+        //groupflag abfangen und handeln
         if(isSocketConnected()) {
             disconnect()
         }
