@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 import TcpSocket from "react-native-tcp-socket"
 import { Message, MessageDTO } from "../types/message"
 import { getPublicKey } from "../util/keygen"
@@ -48,6 +48,10 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
     const [pubKey, setPubKey] = useState<string | null>(null)
 
     const { setMessageHistory } = useStorageContext()
+
+    useEffect(() => {
+        openServer()
+    }, [])
 
     const openServer = async () => {
         if(isSocketConnected()) {

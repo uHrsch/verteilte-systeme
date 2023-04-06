@@ -32,7 +32,7 @@ export default function App() {
 function Navigation() {
 
     const { open } = useEditIconContext()
-    const { group } = useCreateGroupContext() 
+    const { getQrCodeContent } = useCreateGroupContext() 
 
     return (
         <NavigationContainer theme={{
@@ -60,7 +60,7 @@ function Navigation() {
                 <Stack.Screen name="Camera" component={Camera} />
                 <Stack.Screen 
                     name="Chat" 
-                    options={() => ({ 
+                    options={(e) => ({ 
                         title: `Chat`,
                         headerRight: () => (
                             <Menu>
@@ -70,7 +70,9 @@ function Navigation() {
                                 <Pressable onPress={ open }>
                                     <Icon name="pencil" size={24} color={"white"}/>
                                 </Pressable>
-                                <Pressable>
+                                <Pressable onPress={() => {
+                                    e.navigation.navigate("Connect", {qrCodeContent: getQrCodeContent()})
+                                }}>
                                     <Icon name="account-group" size={24} color={"white"}/>
                                 </Pressable>
                             </Menu>

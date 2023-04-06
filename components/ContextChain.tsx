@@ -1,4 +1,5 @@
 import ConnectionContextProvider from "../contexts/ConnectionContext"
+import CreateGroupContextProvider from "../contexts/CreateGroupContext"
 import EditIconContextProvider from "../contexts/EditIconContext"
 import RSAContextProvider from "../contexts/RSAContext"
 import SendMessageProvider from "../contexts/SendMessageContext"
@@ -11,7 +12,9 @@ function ContextChain({children}: {children: React.ReactNode}) {
                 <StorageContextProvider>
                     <ConnectionContextProvider>
                         <SendMessageProvider>
-                            {children}
+                            <CreateGroupContextProvider>
+                                {children}
+                            </CreateGroupContextProvider>
                         </SendMessageProvider>
                     </ConnectionContextProvider>
                 </StorageContextProvider>

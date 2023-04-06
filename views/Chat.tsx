@@ -70,7 +70,7 @@ function Chat({id}: ChatParams) {
 
         return () => {
             setConversation(null)
-            disconnect()
+            disconnect() //könnte probleme verursachen
         }
     }, [])
 

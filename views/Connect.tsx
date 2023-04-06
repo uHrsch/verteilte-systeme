@@ -5,12 +5,13 @@ import FloatingActionButton from "../components/FloatingActionButton";
 import QrCodeWithWrapper from "../components/QrCodeWithWrapper";
 import { defaultStyles } from "../styles/styles";
 import { getLocalInformation } from "../util/generateQRCode";
-import { RootStackParamList } from "./RootStackParams";
+import { ConnectParams, RootStackParamList } from "./RootStackParams";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import TcpSocket from "react-native-tcp-socket";
 import * as Brightness from 'expo-brightness';
 import { ConnectionStatus, getClientSocket, useConnectionContext } from "../contexts/ConnectionContext";
+import { QrCodeContent } from "../types/qrCode";
 
 const styles = StyleSheet.create({
     container: {
@@ -23,32 +24,27 @@ const styles = StyleSheet.create({
 
 type connectProps = NativeStackNavigationProp<RootStackParamList, 'Connect'>;
 
-function Connect(serverInformation: TcpSocket.Socket | null) {
+function Connect({qrCodeContent}: ConnectParams) {
 
     const navigation = useNavigation<connectProps>();
-    const [qrCodeInfo, setQrCodeInfo] = useState<string|undefined|null>(undefined)
+    const [qrCodeInfo, setQrCodeInfo] = useState<QrCodeContent|undefined|null>(undefined)
 
-    const { openServer, connectionStatus, pubKey } = useConnectionContext()
+    const { connectionStatus, pubKey } = useConnectionContext()
 
     useEffect(() => {
         (async () => {
-            let localInfo = null;
-            const clientInfo = await getClientSocket()
-            if ( clientInfo == null){
-                localInfo = await getLocalInformation()
-                if(localInfo == null ||localInfo.localIp == null) {
-                    setQrCodeInfo(null)
-                    return;
-                }
-                openServer()
-            }
-            else {
-                const hostAddress = clientInfo.address()
-                localInfo = hostAddress.address, pubKey
-            }
-            setQrCodeInfo(JSON.stringify(localInfo))
-
             Brightness.setBrightnessAsync(1);
+            if (qrCodeContent) {
+                setQrCodeInfo(qrCodeContent)
+                return
+            }
+            let localInfo = await getLocalInformation()
+            if(localInfo == null ||localInfo.localIp == null) {
+                setQrCodeInfo(null)
+                return;
+            }
+
+            setQrCodeInfo(localInfo)
         })()
 
         return () => {
@@ -71,7 +67,7 @@ function Connect(serverInformation: TcpSocket.Socket | null) {
                 <LoadingSpinner/>
             )}
             {qrCodeInfo !== null && qrCodeInfo !== undefined && (
-                <QrCodeWithWrapper text={qrCodeInfo}/>
+                <QrCodeWithWrapper text={JSON.stringify(qrCodeInfo)}/>
             )}
             <Text style={{
                 ...defaultStyles.text,
