@@ -44,7 +44,7 @@ function Connect(serverInformation: TcpSocket.Socket | null) {
             }
             else {
                 const hostAddress = clientInfo.address()
-                localInfo = hostAddress.address
+                localInfo = hostAddress.address, pubKey
             }
             setQrCodeInfo(JSON.stringify(localInfo))
 
