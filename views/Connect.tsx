@@ -8,8 +8,9 @@ import { getLocalInformation } from "../util/generateQRCode";
 import { RootStackParamList } from "./RootStackParams";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
+import TcpSocket from "react-native-tcp-socket";
 import * as Brightness from 'expo-brightness';
-import { ConnectionStatus, useConnectionContext } from "../contexts/ConnectionContext";
+import { ConnectionStatus, getClientSocket, useConnectionContext } from "../contexts/ConnectionContext";
 
 const styles = StyleSheet.create({
     container: {
@@ -22,7 +23,7 @@ const styles = StyleSheet.create({
 
 type connectProps = NativeStackNavigationProp<RootStackParamList, 'Connect'>;
 
-function Connect() {
+function Connect(serverInformation: TcpSocket.Socket | null) {
 
     const navigation = useNavigation<connectProps>();
     const [qrCodeInfo, setQrCodeInfo] = useState<string|undefined|null>(undefined)
@@ -31,12 +32,20 @@ function Connect() {
 
     useEffect(() => {
         (async () => {
-            const localInfo = await getLocalInformation()
-            if(localInfo == null ||localInfo.localIp == null) {
-                setQrCodeInfo(null)
-                return;
+            let localInfo = null;
+            const clientInfo = await getClientSocket()
+            if ( clientInfo == null){
+                localInfo = await getLocalInformation()
+                if(localInfo == null ||localInfo.localIp == null) {
+                    setQrCodeInfo(null)
+                    return;
+                }
+                openServer()
             }
-            openServer()
+            else {
+                const hostAddress = clientInfo.address()
+                localInfo = hostAddress.address
+            }
             setQrCodeInfo(JSON.stringify(localInfo))
 
             Brightness.setBrightnessAsync(1);

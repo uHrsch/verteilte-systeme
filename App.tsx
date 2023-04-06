@@ -14,6 +14,7 @@ import { ChatParams } from "./views/RootStackParams";
 import Settings from "./views/Settings";
 import React from "react";
 import{ Menu, MenuTrigger} from "react-native-popup-menu";
+import { useCreateGroupContext } from "./contexts/CreateGroupContext"
 
 const Stack = createNativeStackNavigator();
 
@@ -69,7 +70,7 @@ function Navigation() {
                                 <Pressable onPress={ open }>
                                     <Icon name="pencil" size={24} color={"white"}/>
                                 </Pressable>
-                                <Pressable onPress={ group }>
+                                <Pressable>
                                     <Icon name="account-group" size={24} color={"white"}/>
                                 </Pressable>
                             </Menu>
