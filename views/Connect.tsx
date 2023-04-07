@@ -8,7 +8,6 @@ import { getLocalInformation } from "../util/generateQRCode";
 import { ConnectParams, RootStackParamList } from "./RootStackParams";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
-import TcpSocket from "react-native-tcp-socket";
 import * as Brightness from 'expo-brightness';
 import { ConnectionStatus, getClientSocket, useConnectionContext } from "../contexts/ConnectionContext";
 import { QrCodeContent } from "../types/qrCode";
@@ -29,7 +28,7 @@ function Connect({qrCodeContent}: ConnectParams) {
     const navigation = useNavigation<connectProps>();
     const [qrCodeInfo, setQrCodeInfo] = useState<QrCodeContent|undefined|null>(undefined)
 
-    const { connectionStatus, pubKey } = useConnectionContext()
+    const { connectionStatus } = useConnectionContext()
 
     useEffect(() => {
         (async () => {
@@ -53,10 +52,10 @@ function Connect({qrCodeContent}: ConnectParams) {
     }, [])
 
     useEffect(() => {
-        if(connectionStatus == ConnectionStatus.CONNECTED && pubKey != null) {
-            navigation.navigate("Chat", {id: pubKey})
+        if(connectionStatus == ConnectionStatus.CONNECTED) {
+            navigation.navigate("Chat", {id: getClientSocket().pubKey})
         }
-    }, [connectionStatus, pubKey])
+    }, [connectionStatus])
 
     return (
         <View style={{...styles.container, ...defaultStyles.container}}>

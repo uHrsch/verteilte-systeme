@@ -3,11 +3,12 @@ import React, { useCallback, useEffect, useState } from "react";
 import { StyleSheet, View, Text} from 'react-native';
 import { defaultStyles } from "../styles/styles";
 import QrCodeScannerImage from "../assets/qrcode.svg"
-import { ConnectionStatus, useConnectionContext } from "../contexts/ConnectionContext";
+import { ConnectionStatus, getClientSocket, useConnectionContext } from "../contexts/ConnectionContext";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "./RootStackParams";
 import { LoadingSpinnerUnstyled } from "../components/LoadingSpinner";
+import { QrCodeContent } from "../types/qrCode";
 
 const styles = StyleSheet.create({
     container: {
@@ -32,7 +33,7 @@ const Camera = () => {
     const [hasPermission, setHasPermission] = useState<Permission>("NOT_SET")
     const [scanned, setScanned] = useState(false)
 
-    const { connect, connectionStatus, pubKey } = useConnectionContext()
+    const { connect, connectionStatus } = useConnectionContext()
     const navigation = useNavigation<cameraProp>()
 
     useFocusEffect(useCallback(() => {
@@ -49,10 +50,10 @@ const Camera = () => {
 
     const handleBarCodeScanned = ({data}: BarCodeScannerResult) => {
         try {
-            const {localIp, pubKey} = JSON.parse(data)
+            const qrCodeContent: QrCodeContent = JSON.parse(data)
             setScanned(true);
 
-            connect(localIp, pubKey)
+            connect(qrCodeContent)
             
         } catch(e) {
 
@@ -61,11 +62,11 @@ const Camera = () => {
 
     useEffect(() => {
 
-        if(connectionStatus == ConnectionStatus.CONNECTED && pubKey != null) {
-            navigation.navigate("Chat", {id: pubKey})
+        if(connectionStatus == ConnectionStatus.CONNECTED) {
+            navigation.navigate("Chat", {id: getClientSocket().pubKey})
         }
 
-    }, [connectionStatus, pubKey])
+    }, [connectionStatus])
 
     if(hasPermission == "NOT_SET") {
         return (

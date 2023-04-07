@@ -21,12 +21,11 @@ export const useCreateGroupContext = () => useContext(CreateGroupContext)
 
 function CreateGroupContextProvider({children}:{children: React.ReactNode}) {
     
-    const { pubKey } = useConnectionContext()
-    
     const getQrCodeContent = async () => {
-        const hostAddress = getClientSocket()?.address
-        if(hostAddress && ("address" in hostAddress) && pubKey != null) {
-            return { localIp: hostAddress["address"] as string, pubKey: pubKey, group: true }
+        const connectionDetails = getClientSocket()
+        const hostAddress = connectionDetails.socket.address()
+        if(hostAddress && ("address" in hostAddress)) {
+            return { localIp: hostAddress["address"] as string, pubKey: connectionDetails.pubKey, group: true }
         } 
 
         const localInformation = await getLocalInformation()
