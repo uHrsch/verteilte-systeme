@@ -139,19 +139,23 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         }
     }
     
-    const writeMessage = async (message:MessageDTO, pubKey: string, socket: TcpSocket.Socket) => {
+    const writeMessage = async (message:MessageDTO, pubKey: string, socket: TcpSocket.Socket, origin: string) => {
         const encryptedMessage = await encrypt(JSON.stringify(message), pubKey);
-
+            
             socket.write(JSON.stringify({
                 type: "message",
                 data: encryptedMessage,
+                sender: origin
             }))  
     }
 
-    const sendMessage = (message: MessageDTO) => {
-        connections.forEach((pubKey, socket) => {
-            writeMessage(message, pubKey, socket)
-        }) 
+    const sendMessage = async (message: MessageDTO) => {
+        getPublicKey()
+        .then(origin => {
+            connections.forEach((pubKey, socket) => {
+                writeMessage(message, pubKey, socket, origin)
+            }) 
+        })
     }
 
 
@@ -168,11 +172,13 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
 
 
-    const proccessIncomingTextMessage = async (type: string, data: string, sender: TcpSocket.Socket | null) => {
+    const proccessIncomingTextMessage = async (type: string, data: string, sender: TcpSocket.Socket) => {
         if(type === "message") {
             
             const decryptedMessage = await decrypt(data)
             const decryptedJsonMessage:MessageDTO = JSON.parse(decryptedMessage)
+            const origin = connections.get(sender)
+            if (origin == undefined) return
 
             const message: Message = {
                 self: false,
@@ -181,7 +187,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             }
             connections.forEach((pubKey, socket) => {
                 if (socket.address() == sender?.address()) return;
-                writeMessage(message, pubKey, socket)
+                writeMessage(message, pubKey, socket, origin)
             })
             setMessageHistory(message)
         }
