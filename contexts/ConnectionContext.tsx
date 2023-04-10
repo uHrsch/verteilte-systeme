@@ -139,7 +139,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         }
     }
     
-    const writeMessage = async (message:MessageDTO, pubKey: string, socket: TcpSocket.Socket, origin: string) => {
+    const writeMessage = async (message:MessageDTO, pubKey: string, socket: TcpSocket.Socket) => {
         const encryptedMessage = await encrypt(JSON.stringify(message), pubKey);
             
             socket.write(JSON.stringify({
@@ -150,12 +150,9 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
     }
 
     const sendMessage = async (message: MessageDTO) => {
-        getPublicKey()
-        .then(origin => {
-            connections.forEach((pubKey, socket) => {
-                writeMessage(message, pubKey, socket, origin)
-            }) 
-        })
+        connections.forEach((pubKey, socket) => {
+            writeMessage(message, pubKey, socket)
+        }) 
     }
 
 
@@ -181,13 +178,18 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             if (origin == undefined) return
 
             const message: Message = {
-                self: false,
                 text: decryptedJsonMessage.text,
-                timestamp: decryptedJsonMessage.timestamp
+                self: false,
+                timestamp: decryptedJsonMessage.timestamp,
+            }
+            const messageDTO: MessageDTO = {
+                text: decryptedJsonMessage.text,
+                timestamp: decryptedJsonMessage.timestamp,
+                origin: origin
             }
             connections.forEach((pubKey, socket) => {
                 if (socket.address() == sender?.address()) return;
-                writeMessage(message, pubKey, socket, origin)
+                writeMessage(decryptedJsonMessage, pubKey, socket)
             })
             setMessageHistory(message)
         }
