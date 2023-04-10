@@ -174,18 +174,12 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             
             const decryptedMessage = await decrypt(data)
             const decryptedJsonMessage:MessageDTO = JSON.parse(decryptedMessage)
-            const origin = connections.get(sender)
-            if (origin == undefined) return
 
             const message: Message = {
                 text: decryptedJsonMessage.text,
                 self: false,
                 timestamp: decryptedJsonMessage.timestamp,
-            }
-            const messageDTO: MessageDTO = {
-                text: decryptedJsonMessage.text,
-                timestamp: decryptedJsonMessage.timestamp,
-                origin: origin
+                origin: decryptedJsonMessage.origin,
             }
             connections.forEach((pubKey, socket) => {
                 if (socket.address() == sender?.address()) return;
