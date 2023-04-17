@@ -75,7 +75,7 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
         setName(await loadName(id))
     }
 
-    const setMessageHistory = (message: Message) => {
+    const setMessageHistory = (message: Message) => { // TODO nicht speichern, wenn Gruppe
         _setConversation((conversationId) => {
             setMessages(oldMessages => {
                 const newMessages = [

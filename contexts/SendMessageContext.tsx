@@ -42,7 +42,7 @@ function SendMessageProvider({children}:{children: React.ReactNode}) {
         })
         
 
-        setMessageHistory(message)
+        setMessageHistory(message) // TODO hier darf die Message nicht hin, wenn es in einer Gruppe ist
     }
 
     return (

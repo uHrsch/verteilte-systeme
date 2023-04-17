@@ -93,7 +93,9 @@ const Chatlist = () => {
             }
             <FloatingActionButton 
                 icon="qrcode"
-                onPress={async () => navigation.navigate("Connect", {qrCodeContent: await getQrCodeContent()})}/>
+                onPress={() => {
+                    navigation.navigate("Connect", { qrCodeContent: null })
+                }}/>
 
         </View>
     );

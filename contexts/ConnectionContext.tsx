@@ -13,6 +13,7 @@ type ConnectionContextType = {
     disconnect: () => void,
     sendMessage: (message: MessageDTO) => void,
     connectionStatus: ConnectionStatus,
+    isInGroup: boolean,
 }
 
 export enum ConnectionStatus {
@@ -27,6 +28,7 @@ const defaultValues:ConnectionContextType = {
     disconnect: () => {},
     sendMessage: () => {},
     connectionStatus: ConnectionStatus.DISCONNECTED,
+    isInGroup: false
 }
 
 const ConnectionContext = createContext<ConnectionContextType>(defaultValues)
@@ -35,7 +37,7 @@ export const useConnectionContext = () => useContext(ConnectionContext)
 let serverSocket:TcpSocket.Server | null = null;
 const connections = new Map<TcpSocket.Socket, string>()
 
-export function getClientSocket() { 
+export function getClientSocket() {
     return {
         socket: [...connections][0][0],
         pubKey: [...connections][0][1]
@@ -46,6 +48,10 @@ function isSocketConnected() {
     return serverSocket != null
 }
 
+// TODO der Server sendet den clients nie die Info, dass eine Gruppe geöffnet wurde
+// TODO group wird nie resettet
+// TODO local history wird nicht umgangen, wenn group flag gesetzt
+
 function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
     const [connectionStatus, setConnectionStatus] = useState(ConnectionStatus.DISCONNECTED);
@@ -55,9 +61,15 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
     useEffect(() => {
         openServer()
+
+        return () => {
+            disconnect()
+            serverSocket?.close()
+        }
     }, [])
 
     const openServer = async () => {
+        console.log("openserver")
         if(isSocketConnected()) {
             disconnect()
         }
@@ -66,9 +78,8 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
         serverSocket = TcpSocket.createServer((socket) => {
 
-
             socket.on("data", (rawData) => {
-                
+                console.log("server data")
                 const { type, data } = JSON.parse(rawData.toString())
 
                 proccessIncomingTextMessage(type, data, socket)
@@ -77,15 +88,17 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
                   connections.set(socket, data)
                   setConnectionStatus(ConnectionStatus.CONNECTED)
                 }
-                if (type === "groupChat"){
+                if (type === "groupChat") { //TODO das wird nie gesendet
                     setGroup(group => !group)
                 }
             })
 
             socket.on("error", () => {
+                console.log("server socket error")
                 socket.destroy()
             })
             socket.on("close", () => {
+                console.log("server socket close")
                 socket.destroy()
             })
         }).listen({port: 9090, host: localInformation?.localIp ?? "0.0.0.0"})
@@ -93,8 +106,14 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         serverSocket.on("listening", () => {
             setConnectionStatus(ConnectionStatus.CONNECTING)
         })
-        serverSocket.on("close", disconnect)
-        serverSocket.on("error", disconnect)
+        serverSocket.on("close", () => {
+            disconnect()
+            serverSocket?.close()
+        })
+        serverSocket.on("error", (e) => {
+            console.log(e)
+            disconnect()
+        })
     }
 
     const connect = async (qrCodeContent: QrCodeContent) => {
@@ -110,7 +129,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             host: qrCodeContent["localIp"],
             localAddress: localInformation?.localIp ?? "127.0.0.1",
         }
-        
+        console.log("local connection start")
         const clientSocket = TcpSocket.createConnection(options, () => {   
             connections.set(clientSocket,qrCodeContent["pubKey"])
             
@@ -127,16 +146,13 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         clientSocket.on("error", disconnect)
     }
 
-    const disconnect = () => {        
+    const disconnect = () => {    
+        console.log("disconnect")    
         setConnectionStatus(ConnectionStatus.DISCONNECTED)
         connections.forEach((_, socket) => {
             socket.destroy()
         })
         connections.clear()
-        if(serverSocket != null) {
-            serverSocket.close()
-            serverSocket = null;
-        }
     }
     
     const writeMessage = async (message:MessageDTO, pubKey: string, socket: TcpSocket.Socket) => {
@@ -196,6 +212,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             disconnect,
             sendMessage,
             connectionStatus,
+            isInGroup: group
         }}>
             {children}
         </ConnectionContext.Provider>

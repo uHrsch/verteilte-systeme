@@ -2,7 +2,7 @@ import MaterialCommunityIcons from "@expo/vector-icons/MaterialCommunityIcons";
 import { Icon, IconComponentProvider, Pressable, ThemeProvider } from "@react-native-material/core";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { StatusBar } from 'react-native';
+import { StatusBar, StyleSheet, Text } from 'react-native';
 import ContextChain from "./components/ContextChain";
 import { useEditIconContext } from "./contexts/EditIconContext";
 import { useStorageContext } from "./contexts/StorageContext";
@@ -12,18 +12,34 @@ import Chatlist from "./views/Chatlist";
 import Connect from "./views/Connect";
 import { ChatParams } from "./views/RootStackParams";
 import Settings from "./views/Settings";
-import React from "react";
-import{ Menu, MenuTrigger} from "react-native-popup-menu";
+import React, { useState } from "react";
+import{ Menu, MenuOption, MenuOptions, MenuProvider, MenuTrigger} from "react-native-popup-menu";
 import { useCreateGroupContext } from "./contexts/CreateGroupContext"
+import { defaultStyles } from "./styles/styles";
+import { ConnectionStatus, useConnectionContext } from "./contexts/ConnectionContext";
 
 const Stack = createNativeStackNavigator();
+const styles = StyleSheet.create({
+    menu: {
+        backgroundColor: "#191E21",
+        padding: 10,
+    },
+    menuOption: {
+        display: "flex",
+        flexDirection: "row",
+        gap: 10,
+    }
+
+})
 
 export default function App() {
   return (
     // @ts-ignore
     <IconComponentProvider IconComponent={MaterialCommunityIcons}>
         <ContextChain>
-            <Navigation/>
+            <MenuProvider>
+                <Navigation/>
+            </MenuProvider>
         </ContextChain>
     </IconComponentProvider>
   );
@@ -32,7 +48,8 @@ export default function App() {
 function Navigation() {
 
     const { open } = useEditIconContext()
-    const { getQrCodeContent } = useCreateGroupContext() 
+    const { getQrCodeContent } = useCreateGroupContext()
+    const { connectionStatus, isInGroup } = useConnectionContext()
 
     return (
         <NavigationContainer theme={{
@@ -67,14 +84,25 @@ function Navigation() {
                                 <MenuTrigger>
                                     <Icon name="dots-vertical" size={24} color="white"/>
                                 </MenuTrigger>
-                                <Pressable onPress={ open }>
-                                    <Icon name="pencil" size={24} color={"white"}/>
-                                </Pressable>
-                                <Pressable onPress={() => {
-                                    e.navigation.navigate("Connect", {qrCodeContent: getQrCodeContent()})
-                                }}>
-                                    <Icon name="account-group" size={24} color={"white"}/>
-                                </Pressable>
+                                <MenuOptions optionsContainerStyle={styles.menu}>
+                                    {!isInGroup && (
+                                        <MenuOption style={styles.menuOption} onSelect={open}>
+                                            <Icon name="pencil" size={24} color={"white"}/>
+                                            <Text style={defaultStyles.text}>Change name</Text>
+                                        </MenuOption>
+                                    )}
+                                    {connectionStatus == ConnectionStatus.CONNECTED && (
+                                        <MenuOption 
+                                            style={styles.menuOption} 
+                                            onSelect={() => {
+                                                e.navigation.navigate("Connect", {qrCodeContent: getQrCodeContent()})
+                                            }} 
+                                        >
+                                                <Icon name="account-group" size={24} color={"white"}/>
+                                                <Text style={defaultStyles.text}>Open Group</Text>
+                                        </MenuOption>
+                                    )}
+                                </MenuOptions>
                             </Menu>
                         )
                     })}
