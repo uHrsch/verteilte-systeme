@@ -8,11 +8,15 @@ import { QrCodeContent } from "../types/qrCode";
 import { getLocalInformation } from "../util/generateQRCode";
 
 type CreateGroupeContextType = {
-    getQrCodeContent: () => Promise<QrCodeContent | null> 
+    getQrCodeContent: () => Promise<QrCodeContent | null>,
+    group: boolean,
+    setGroup:(newGroup: boolean) => void 
 }
 
 const defaultValues:CreateGroupeContextType = {
-    getQrCodeContent: async () => {return null}
+    getQrCodeContent: async () => {return null},
+    group: false,
+    setGroup: () => {}
 }
 
 const CreateGroupContext = createContext<CreateGroupeContextType>(defaultValues)
@@ -20,6 +24,7 @@ const CreateGroupContext = createContext<CreateGroupeContextType>(defaultValues)
 export const useCreateGroupContext = () => useContext(CreateGroupContext)
 
 function CreateGroupContextProvider({children}:{children: React.ReactNode}) {
+    const [group, setGroup] = useState(false)    
     
     const getQrCodeContent = async () => {
         const connectionDetails = getClientSocket()
@@ -38,7 +43,9 @@ function CreateGroupContextProvider({children}:{children: React.ReactNode}) {
 
     return (
         <CreateGroupContext.Provider value={{
-            getQrCodeContent
+            getQrCodeContent,
+            group,
+            setGroup
         }}>
             {children}
         </CreateGroupContext.Provider>

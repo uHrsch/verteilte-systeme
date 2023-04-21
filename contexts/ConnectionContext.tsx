@@ -6,6 +6,7 @@ import { decrypt, encrypt } from '../util/encryptionUtils'
 import { getLocalInformation } from "../util/generateQRCode"
 import { useStorageContext } from "./StorageContext"
 import { QrCodeContent } from "../types/qrCode"
+import { useCreateGroupContext } from "./CreateGroupContext"
 
 type ConnectionContextType = {
     openServer: () => void,
@@ -36,7 +37,6 @@ const ConnectionContext = createContext<ConnectionContextType>(defaultValues)
 export const useConnectionContext = () => useContext(ConnectionContext)
 let serverSocket:TcpSocket.Server | null = null;
 const connections = new Map<TcpSocket.Socket, string>()
-export const [group, setGroup] = useState(false)
 
 export function getClientSocket() {
     return {
@@ -52,8 +52,8 @@ function isSocketConnected() {
 function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
     const [connectionStatus, setConnectionStatus] = useState(ConnectionStatus.DISCONNECTED);
+    const { group, setGroup } = useCreateGroupContext()
     
-
     const { setMessageHistory } = useStorageContext()
 
     useEffect(() => {
@@ -74,7 +74,9 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         const localInformation = await getLocalInformation()
 
         serverSocket = TcpSocket.createServer((socket) => {
-
+            
+            setConnectionStatus(ConnectionStatus.CONNECTING)
+            
             socket.on("data", (rawData) => {
                 console.log("server data")
                 const { type, data } = JSON.parse(rawData.toString())
@@ -86,8 +88,8 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
                   setConnectionStatus(ConnectionStatus.CONNECTED)
                 }
                 if (type === "groupChat") {
-                    setGroup(group => !group)
-                    connections.forEach((pubKey, socket) => {
+                    setGroup(true)
+                    connections.forEach((_, socket) => {
                         socket.write(JSON.stringify({
                             type: "groupChat"
                         }))
@@ -98,18 +100,18 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             socket.on("error", () => {
                 console.log("server socket error")
                 socket.destroy()
-                setGroup(false)
             })
             socket.on("close", () => {
                 console.log("server socket close")
                 socket.destroy()
-                setGroup(false)
+                connections.delete(socket)
+                if(connections.size == 0){
+                    setGroup(false)
+                    setConnectionStatus(ConnectionStatus.DISCONNECTED)
+                }
             })
         }).listen({port: 9090, host: localInformation?.localIp ?? "0.0.0.0"})
 
-        serverSocket.on("listening", () => {
-            setConnectionStatus(ConnectionStatus.CONNECTING)
-        })
         serverSocket.on("close", () => {
             disconnect()
             serverSocket?.close()
@@ -183,8 +185,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
         const pubKey = await getPublicKey()
         connections.entries().next().value.write(JSON.stringify({
             type: "pubKey",
-            data: pubKey,
-            groupFlag: group
+            data: pubKey
         }))
         if(group){
             connections.entries().next().value.write(JSON.stringify({
@@ -211,12 +212,10 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
                 if (socket.address() == sender?.address()) return;
                 writeMessage(decryptedJsonMessage, pubKey, socket)
             })
-            if(!group){
-                setMessageHistory(message)
-            }
+            setMessageHistory(message)
         }
         if(type === "groupChat") {
-            setGroup(group => !group)
+            setGroup(true)
         }
     }
 

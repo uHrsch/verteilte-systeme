@@ -1,6 +1,8 @@
 import { createContext, useContext, useState } from "react"
 import { Message } from "../types/message"
 import AsyncStorage from "@react-native-async-storage/async-storage"
+import { useConnectionContext } from "./ConnectionContext"
+import { useCreateGroupContext } from "./CreateGroupContext"
 
 type StorageContextType = {
     getConversationIds: () => Promise<string[]>
@@ -31,6 +33,7 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
     const [conversation, _setConversation] = useState<string | null>(null);
     const [messages, setMessages] = useState<Message[] | null>(null)
     const [name, setName] = useState<string | null>(null)
+    const { group } = useCreateGroupContext()
 
     const loadMessages = async (id: string) => {
         const loadedMessages = await AsyncStorage.getItem(`chat.${id}`) ?? "[]"
@@ -82,7 +85,9 @@ function StorageContextProvider({children}:{children: React.ReactNode}) {
                     message,
                     ...(oldMessages ||[]),
                 ]
-                AsyncStorage.setItem(`chat.${conversationId}`, JSON.stringify(newMessages))
+                if(!group){
+                    AsyncStorage.setItem(`chat.${conversationId}`, JSON.stringify(newMessages))
+                }
                 return newMessages
             })
             return conversationId

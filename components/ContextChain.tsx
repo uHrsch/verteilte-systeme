@@ -9,15 +9,15 @@ function ContextChain({children}: {children: React.ReactNode}) {
     return (
         <RSAContextProvider>
             <EditIconContextProvider>
-                <StorageContextProvider>
-                    <ConnectionContextProvider>
-                        <SendMessageProvider>
-                            <CreateGroupContextProvider>
+                <CreateGroupContextProvider>
+                    <StorageContextProvider>
+                        <ConnectionContextProvider>
+                            <SendMessageProvider>
                                 {children}
-                            </CreateGroupContextProvider>
-                        </SendMessageProvider>
-                    </ConnectionContextProvider>
-                </StorageContextProvider>
+                            </SendMessageProvider>
+                        </ConnectionContextProvider>
+                    </StorageContextProvider>
+                </CreateGroupContextProvider>
             </EditIconContextProvider>
         </RSAContextProvider>
     )

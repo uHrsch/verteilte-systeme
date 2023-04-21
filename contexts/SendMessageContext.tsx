@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react"
 import { Message, MessageDTO } from "../types/message"
-import { group, useConnectionContext } from "./ConnectionContext"
+import { useConnectionContext } from "./ConnectionContext"
 import { useStorageContext } from "./StorageContext"
 import { getPublicKey } from "../util/keygen"
 
@@ -41,9 +41,7 @@ function SendMessageProvider({children}:{children: React.ReactNode}) {
             connectionSendMessage(messageDTO)
         })
         
-        if(!group){
-            setMessageHistory(message)
-        }
+        setMessageHistory(message)
     }
 
     return (
