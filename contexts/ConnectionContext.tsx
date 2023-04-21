@@ -36,6 +36,7 @@ const ConnectionContext = createContext<ConnectionContextType>(defaultValues)
 export const useConnectionContext = () => useContext(ConnectionContext)
 let serverSocket:TcpSocket.Server | null = null;
 const connections = new Map<TcpSocket.Socket, string>()
+export const [group, setGroup] = useState(false)
 
 export function getClientSocket() {
     return {
@@ -48,14 +49,10 @@ function isSocketConnected() {
     return serverSocket != null
 }
 
-// TODO der Server sendet den clients nie die Info, dass eine Gruppe geöffnet wurde
-// TODO group wird nie resettet
-// TODO local history wird nicht umgangen, wenn group flag gesetzt
-
 function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
     const [connectionStatus, setConnectionStatus] = useState(ConnectionStatus.DISCONNECTED);
-    const [group, setGroup] = useState(false)
+    
 
     const { setMessageHistory } = useStorageContext()
 
@@ -88,18 +85,25 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
                   connections.set(socket, data)
                   setConnectionStatus(ConnectionStatus.CONNECTED)
                 }
-                if (type === "groupChat") { //TODO das wird nie gesendet
+                if (type === "groupChat") {
                     setGroup(group => !group)
+                    connections.forEach((pubKey, socket) => {
+                        socket.write(JSON.stringify({
+                            type: "groupChat"
+                        }))
+                    })
                 }
             })
 
             socket.on("error", () => {
                 console.log("server socket error")
                 socket.destroy()
+                setGroup(false)
             })
             socket.on("close", () => {
                 console.log("server socket close")
                 socket.destroy()
+                setGroup(false)
             })
         }).listen({port: 9090, host: localInformation?.localIp ?? "0.0.0.0"})
 
@@ -153,6 +157,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             socket.destroy()
         })
         connections.clear()
+        setGroup(false)
     }
     
     const writeMessage = async (message:MessageDTO, pubKey: string, socket: TcpSocket.Socket) => {
@@ -181,6 +186,11 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             data: pubKey,
             groupFlag: group
         }))
+        if(group){
+            connections.entries().next().value.write(JSON.stringify({
+                type: "groupChat"
+            }))
+        }
     }
 
 
@@ -201,7 +211,12 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
                 if (socket.address() == sender?.address()) return;
                 writeMessage(decryptedJsonMessage, pubKey, socket)
             })
-            setMessageHistory(message)
+            if(!group){
+                setMessageHistory(message)
+            }
+        }
+        if(type === "groupChat") {
+            setGroup(group => !group)
         }
     }
 

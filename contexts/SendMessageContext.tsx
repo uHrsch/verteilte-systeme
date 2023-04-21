@@ -1,6 +1,6 @@
 import { createContext, useContext } from "react"
 import { Message, MessageDTO } from "../types/message"
-import { useConnectionContext } from "./ConnectionContext"
+import { group, useConnectionContext } from "./ConnectionContext"
 import { useStorageContext } from "./StorageContext"
 import { getPublicKey } from "../util/keygen"
 
@@ -41,8 +41,9 @@ function SendMessageProvider({children}:{children: React.ReactNode}) {
             connectionSendMessage(messageDTO)
         })
         
-
-        setMessageHistory(message) // TODO hier darf die Message nicht hin, wenn es in einer Gruppe ist
+        if(!group){
+            setMessageHistory(message)
+        }
     }
 
     return (
