@@ -41,7 +41,6 @@ const Chatlist = () => {
     const [chats, setChats] = useState<{id: string, name: string}[] | null>(null)
     const navigation = useNavigation<chatListProp>();
     const { getConversationIds, getName } = useStorageContext()
-    const { getQrCodeContent } = useCreateGroupContext()
 
     
     const onPress = (id: string) => {

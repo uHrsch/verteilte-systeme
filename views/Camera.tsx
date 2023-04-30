@@ -1,13 +1,12 @@
 import { BarCodeScanner, BarCodeScannerResult } from "expo-barcode-scanner";
 import React, { useCallback, useEffect, useState } from "react";
-import { StyleSheet, View, Text} from 'react-native';
+import { ActivityIndicator, StyleSheet, View, Text} from 'react-native';
 import { defaultStyles } from "../styles/styles";
 import QrCodeScannerImage from "../assets/qrcode.svg"
 import { ConnectionStatus, getClientSocket, useConnectionContext } from "../contexts/ConnectionContext";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { RootStackParamList } from "./RootStackParams";
-import { LoadingSpinnerUnstyled } from "../components/LoadingSpinner";
 import { QrCodeContent } from "../types/qrCode";
 
 const styles = StyleSheet.create({
@@ -23,6 +22,12 @@ const styles = StyleSheet.create({
         backgroundColor: 'grey',
         borderRadius: 5,
     },
+    loading: {
+        position: "absolute",
+        top: 100,
+        left: 0,
+        right: 0,
+    }
 });
 
 type Permission = "NOT_SET" | "DENIED" | "ALLOWED"
@@ -101,9 +106,7 @@ const Camera = () => {
             ...defaultStyles.container,
             ...styles.container
         }}>
-            { scanned && (
-                <LoadingSpinnerUnstyled/>
-            )}
+            
             <BarCodeScanner
                 onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
                 style={StyleSheet.absoluteFillObject}
@@ -112,6 +115,13 @@ const Camera = () => {
             <QrCodeScannerImage
                 width={"80%"}
             />
+            { scanned && (
+                <ActivityIndicator
+                    size={50}
+                    color="white"
+                    style={styles.loading}
+                />
+            )}
         </View>
     );
 };
