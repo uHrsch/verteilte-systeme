@@ -1,18 +1,23 @@
-import { createContext, useContext, useState } from "react"
+import { createContext, useContext, useEffect, useState } from "react"
 import TcpSocket from "react-native-tcp-socket"
-import { Message, MessageDTO } from "../types/message"
+import { Message, MessageDTO, SocketMessage } from "../types/message"
 import { getPublicKey } from "../util/keygen"
 import { decrypt, encrypt } from '../util/encryptionUtils'
 import { getLocalInformation } from "../util/generateQRCode"
 import { useStorageContext } from "./StorageContext"
+import { QrCodeContent } from "../types/qrCode"
+import { useCreateGroupContext } from "./CreateGroupContext"
+import { AppState } from "react-native"
+
+const PORT = 9092
 
 type ConnectionContextType = {
     openServer: () => void,
-    connect: (ip: string, publicKey: string) => void,
+    connect: (qrCodeContent: QrCodeContent) => void,
     disconnect: () => void,
     sendMessage: (message: MessageDTO) => void,
     connectionStatus: ConnectionStatus,
-    pubKey: string |null,
+    isInGroup: boolean,
 }
 
 export enum ConnectionStatus {
@@ -27,140 +32,223 @@ const defaultValues:ConnectionContextType = {
     disconnect: () => {},
     sendMessage: () => {},
     connectionStatus: ConnectionStatus.DISCONNECTED,
-    pubKey: null,
+    isInGroup: false
 }
 
 const ConnectionContext = createContext<ConnectionContextType>(defaultValues)
 
 export const useConnectionContext = () => useContext(ConnectionContext)
 let serverSocket:TcpSocket.Server | null = null;
-let clientSocket:TcpSocket.Socket | null = null;
+const connections = new Map<TcpSocket.Socket, string>()
+
+export function getClientSocket() {
+    return {
+        socket: [...connections][0][0],
+        pubKey: [...connections][0][1]
+    }
+};
 
 function isSocketConnected() {
-    return serverSocket != null || clientSocket != null
+    return serverSocket != null
 }
 
 function ConnectionContextProvider({children}:{children: React.ReactNode}) {
 
     const [connectionStatus, setConnectionStatus] = useState(ConnectionStatus.DISCONNECTED);
-    const [pubKey, setPubKey] = useState<string | null>(null)
-
+    const { group, setGroup } = useCreateGroupContext()
+    
     const { setMessageHistory } = useStorageContext()
+
+    useEffect(() => {
+        openServer()
+
+        const subscription = AppState.addEventListener("change", nextAppState => {
+            if(nextAppState == "background") {
+                shutdown()
+            }
+        })
+
+        return () => {
+            shutdown()
+            subscription.remove()
+        }
+    }, [])
+
+    const writeToSocket = (socket: TcpSocket.Socket, message: SocketMessage) => {
+        socket.write(JSON.stringify(message))
+    }
 
     const openServer = async () => {
         if(isSocketConnected()) {
             disconnect()
         }
-
+        
         const localInformation = await getLocalInformation()
 
         serverSocket = TcpSocket.createServer((socket) => {
-
-            clientSocket = socket
-
+            
+            setConnectionStatus(ConnectionStatus.CONNECTING)
+            
             socket.on("data", (rawData) => {
-                
-                const { type, data } = JSON.parse(rawData.toString())
+                const message: SocketMessage = JSON.parse(rawData.toString())
 
-                proccessIncomingTextMessage(type, data)
+                proccessIncomingTextMessage(message, socket)
+                const { type } = message;
 
-                if(type === "pubKey") {
-                  setPubKey(data)
-                  setConnectionStatus(ConnectionStatus.CONNECTED)
+                if (type === "pubKey") {
+                    connections.set(socket, message.data)
+                    setConnectionStatus(ConnectionStatus.CONNECTED)
+                }
+                if (type === "groupChat") {
+                    setGroup(true)
+                    const groupChatMessage: SocketMessage = {
+                        type: "groupChat"
+                    }
+                    connections.forEach((_, socket) => {
+                        writeToSocket(socket, groupChatMessage)
+                    })
                 }
             })
 
             socket.on("error", () => {
-                disconnect()
+                socket.destroy()
             })
             socket.on("close", () => {
-                disconnect()
+                socket.destroy()
+                connections.delete(socket)
+                if(connections.size == 0){
+                    setGroup(false)
+                    setConnectionStatus(ConnectionStatus.DISCONNECTED)
+                }
             })
-        }).listen({port: 9090, host: localInformation?.localIp ?? "0.0.0.0"})
+        }).listen({port: PORT, host: localInformation?.localIp ?? "0.0.0.0"})
 
-        serverSocket.on("listening", () => {
-            setConnectionStatus(ConnectionStatus.CONNECTING)
+        serverSocket.on("close", () => {
+            disconnect()
+            serverSocket?.close()
         })
-        serverSocket.on("close", disconnect)
-        serverSocket.on("error", disconnect)
+        serverSocket.on("error", (e) => {
+            console.log(e)
+            disconnect()
+        })
     }
 
-    const connect = async (ip: string, publicKey: string) => {
+    const connect = async (qrCodeContent: QrCodeContent) => {
         if(isSocketConnected()) {
             disconnect()
         }
 
-        setPubKey(publicKey)
         setConnectionStatus(ConnectionStatus.CONNECTING)
         const localInformation = await getLocalInformation()
-
+        
         const options = {
-            port: 9090,
-            host: ip,
+            port: PORT,
+            host: qrCodeContent["localIp"],
             localAddress: localInformation?.localIp ?? "127.0.0.1",
         }
+        const clientSocket = TcpSocket.createConnection(options, () => {   
 
-        clientSocket = TcpSocket.createConnection(options, () => {   
-            answerConnection();
-            setConnectionStatus(ConnectionStatus.CONNECTED)
-            
-            clientSocket?.on("data", (rawData) => {                
-                const { type, data } = JSON.parse(rawData.toString())
+            connections.set(clientSocket,qrCodeContent["pubKey"])
+            answerConnection(qrCodeContent["group"]);
 
-                proccessIncomingTextMessage(type, data)
+            clientSocket?.on("data", (rawData) => {
+                const message: SocketMessage = JSON.parse(rawData.toString())
+                proccessIncomingTextMessage(message, clientSocket)
             })
+
+            setConnectionStatus(ConnectionStatus.CONNECTED)
         })
         clientSocket.on("close", disconnect)
         clientSocket.on("error", disconnect)
     }
 
-    const disconnect = () => {        
-        setPubKey(null)
+    const disconnect = () => {    
         setConnectionStatus(ConnectionStatus.DISCONNECTED)
-
-        if(clientSocket != null) {
-            clientSocket.destroy()
-            clientSocket = null;
+        connections.forEach((_, socket) => {
+            socket.destroy()
+        })
+        connections.clear()
+        setGroup(false)
+    }
+    
+    const writeMessage = async (message:MessageDTO, pubKey: string, socket: TcpSocket.Socket) => {
+        const encryptedText = await encrypt(message.text, pubKey);
+        const messageWithEncryptedText: MessageDTO = {
+            text: encryptedText,
+            origin: message.origin,
+            timestamp: message.timestamp,
         }
-        if(serverSocket != null) {
-            serverSocket.close()
-            serverSocket = null;
-        }
+            
+        writeToSocket(socket, {
+            type: "message",
+            data: messageWithEncryptedText,
+        });
     }
 
     const sendMessage = async (message: MessageDTO) => {
-        if(clientSocket == null || pubKey == null) return;
-        const encryptedMessage = await encrypt(JSON.stringify(message), pubKey);
-
-        clientSocket.write(JSON.stringify({
-            type: "message",
-            data: encryptedMessage,
-        })) 
+        connections.forEach((pubKey, socket) => {
+            writeMessage(message, pubKey, socket)
+        }) 
     }
 
-    const answerConnection = async () => {
-        if(clientSocket == null) return;
+
+    const answerConnection = async (group: boolean) => {
+        if(connections.size != 1) return;
 
         const pubKey = await getPublicKey()
-        clientSocket.write(JSON.stringify({
+        const pubKeyMessage: SocketMessage = {
             type: "pubKey",
             data: pubKey,
-        }))
+        }
+        connections.forEach((_, socket) => {
+            writeToSocket(socket, pubKeyMessage)
+        })
+
+        if(group){
+            connections.forEach((_, socket) => {
+                writeToSocket(socket,  {
+                    type: "groupChat",
+                })
+            })
+        }
     }
 
-    const proccessIncomingTextMessage = async (type: string, data: string) => {
+
+
+    const proccessIncomingTextMessage = async (incommingMessage: SocketMessage, sender: TcpSocket.Socket) => {
+        const { type } = incommingMessage;
         if(type === "message") {
-            const decryptedMessage = await decrypt(data)
-            const decryptedJsonMessage:MessageDTO = JSON.parse(decryptedMessage)
+            const { data: jsonMessage } = incommingMessage
+            
+            const decryptedText = await decrypt(jsonMessage.text)
 
             const message: Message = {
+                text: decryptedText,
                 self: false,
-                text: decryptedJsonMessage.text,
-                timestamp: decryptedJsonMessage.timestamp
+                timestamp: jsonMessage.timestamp,
+                origin: jsonMessage.origin,
             }
 
+            const newMessageDTO: MessageDTO = {
+                text: decryptedText,
+                origin: jsonMessage.origin,
+                timestamp: jsonMessage.timestamp,
+            }
+
+            connections.forEach((pubKey, socket) => {
+                if (socket.address().toString() == sender?.address().toString()) return
+                writeMessage(newMessageDTO, pubKey, socket)
+            })
             setMessageHistory(message)
-        } 
+        }
+        if(type === "groupChat") {
+            setGroup(true)
+        }
+    }
+
+    const shutdown = () => {
+        disconnect()
+        serverSocket?.close()
     }
 
     return (
@@ -170,7 +258,7 @@ function ConnectionContextProvider({children}:{children: React.ReactNode}) {
             disconnect,
             sendMessage,
             connectionStatus,
-            pubKey,
+            isInGroup: group
         }}>
             {children}
         </ConnectionContext.Provider>

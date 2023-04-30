@@ -7,6 +7,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useStorageContext } from "../contexts/StorageContext";
 import { defaultStyles } from "../styles/styles";
 import { RootStackParamList } from "./RootStackParams";
+import { useCreateGroupContext } from "../contexts/CreateGroupContext";
 
 const styles = StyleSheet.create({
     maincontainer: {
@@ -40,6 +41,7 @@ const Chatlist = () => {
     const [chats, setChats] = useState<{id: string, name: string}[] | null>(null)
     const navigation = useNavigation<chatListProp>();
     const { getConversationIds, getName } = useStorageContext()
+
     
     const onPress = (id: string) => {
         navigation.navigate("Chat", {id: id})
@@ -90,7 +92,9 @@ const Chatlist = () => {
             }
             <FloatingActionButton 
                 icon="qrcode"
-                onPress={() => navigation.navigate("Connect")}/>
+                onPress={() => {
+                    navigation.navigate("Connect", { qrCodeContent: null })
+                }}/>
 
         </View>
     );

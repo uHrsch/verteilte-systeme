@@ -1,7 +1,8 @@
 import { createContext, useContext } from "react"
-import { Message } from "../types/message"
+import { Message, MessageDTO } from "../types/message"
 import { useConnectionContext } from "./ConnectionContext"
 import { useStorageContext } from "./StorageContext"
+import { getPublicKey } from "../util/keygen"
 
 type SendMessageontextType = {
     sendMessage: (text: string) => void,
@@ -22,13 +23,24 @@ function SendMessageProvider({children}:{children: React.ReactNode}) {
 
     const sendMessage = (text: string) => {
 
+        const timestamp = new Date().getTime()
+        
         const message:Message = {
             text,
             self: true,
-            timestamp: new Date().getTime()
+            timestamp 
         }
 
-        connectionSendMessage(message)
+        getPublicKey()
+        .then(pubKey => {
+            const messageDTO: MessageDTO = {
+                text,
+                timestamp,
+                origin: pubKey
+            }
+            connectionSendMessage(messageDTO)
+        })
+        
         setMessageHistory(message)
     }
 

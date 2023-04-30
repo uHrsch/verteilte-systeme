@@ -1,7 +1,7 @@
 import { KeyboardAvoidingView, FlatList, StyleSheet, Text, TextInput, View } from "react-native";
 import IconButton from "../components/IconButton";
 import { defaultStyles } from "../styles/styles";
-import { ChatParams } from "./RootStackParams";
+import { ChatParams, RootStackParamList } from "./RootStackParams";
 import { useEffect, useState } from "react"
 import ChangeNameModal from "../components/ChangeNameModal";
 import { useEditIconContext } from "../contexts/EditIconContext";
@@ -9,6 +9,8 @@ import { useStorageContext } from "../contexts/StorageContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { ConnectionStatus, useConnectionContext } from "../contexts/ConnectionContext";
 import { useSendMessageContext } from "../contexts/SendMessageContext";
+import { NativeStackNavigationProp } from "@react-navigation/native-stack";
+import { useNavigation } from "@react-navigation/native";
 
 const styles = StyleSheet.create({
     container: {
@@ -52,29 +54,40 @@ const styles = StyleSheet.create({
     }
 })
 
+export type chatProp = NativeStackNavigationProp<RootStackParamList, 'Chat'>;
+
+type PayloadType = {name: string, params: any}|null
+
 function Chat({id}: ChatParams) {
 
     const [input, setInput] = useState("")
     
     const { connectionStatus, disconnect } = useConnectionContext()
     const { isOpened, close } = useEditIconContext()
-    const { setConversation, getName ,getMessages, changeName } = useStorageContext()
+    const { setConversation, getMessages, changeName } = useStorageContext()
     const { sendMessage: sendMessageInternal } = useSendMessageContext()
     const messages = getMessages()
+    const navigation = useNavigation<chatProp>()
 
     useEffect(() => {
-        (async () => {
-            await setConversation(id)
-            const name = await getName(id)
-        })()
+        setConversation(id)
+
+        const unsubscribe = navigation.addListener("beforeRemove", e => {            
+            const payload = e.data.action.payload as PayloadType;
+            if(!payload || !payload.name || payload.name != "Connect" || !payload.params.qrCodeContent) {
+                setConversation(null)
+                disconnect()
+            }
+        })
 
         return () => {
-            setConversation(null)
-            disconnect()
+            unsubscribe()
         }
     }, [])
 
     const sendMessage = () => {
+        if(input == "") return;
+
         sendMessageInternal(input)
         setInput("")
     }

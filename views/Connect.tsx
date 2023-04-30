@@ -5,11 +5,12 @@ import FloatingActionButton from "../components/FloatingActionButton";
 import QrCodeWithWrapper from "../components/QrCodeWithWrapper";
 import { defaultStyles } from "../styles/styles";
 import { getLocalInformation } from "../util/generateQRCode";
-import { RootStackParamList } from "./RootStackParams";
+import { ConnectParams, RootStackParamList } from "./RootStackParams";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import * as Brightness from 'expo-brightness';
-import { ConnectionStatus, useConnectionContext } from "../contexts/ConnectionContext";
+import { ConnectionStatus, getClientSocket, useConnectionContext } from "../contexts/ConnectionContext";
+import { QrCodeContent } from "../types/qrCode";
 
 const styles = StyleSheet.create({
     container: {
@@ -22,24 +23,27 @@ const styles = StyleSheet.create({
 
 type connectProps = NativeStackNavigationProp<RootStackParamList, 'Connect'>;
 
-function Connect() {
+function Connect({qrCodeContent}: ConnectParams) {
 
     const navigation = useNavigation<connectProps>();
-    const [qrCodeInfo, setQrCodeInfo] = useState<string|undefined|null>(undefined)
+    const [qrCodeInfo, setQrCodeInfo] = useState<QrCodeContent|undefined|null>(undefined)
 
-    const { openServer, connectionStatus, pubKey } = useConnectionContext()
+    const { connectionStatus } = useConnectionContext()
 
     useEffect(() => {
         (async () => {
-            const localInfo = await getLocalInformation()
+            Brightness.setBrightnessAsync(1);
+            if (qrCodeContent) {
+                setQrCodeInfo(qrCodeContent)
+                return
+            }
+            let localInfo = await getLocalInformation()
             if(localInfo == null ||localInfo.localIp == null) {
                 setQrCodeInfo(null)
                 return;
             }
-            openServer()
-            setQrCodeInfo(JSON.stringify(localInfo))
 
-            Brightness.setBrightnessAsync(1);
+            setQrCodeInfo(localInfo)
         })()
 
         return () => {
@@ -48,10 +52,10 @@ function Connect() {
     }, [])
 
     useEffect(() => {
-        if(connectionStatus == ConnectionStatus.CONNECTED && pubKey != null) {
-            navigation.navigate("Chat", {id: pubKey})
+        if(connectionStatus == ConnectionStatus.CONNECTED) {
+            navigation.navigate("Chat", {id: getClientSocket().pubKey})
         }
-    }, [connectionStatus, pubKey])
+    }, [connectionStatus])
 
     return (
         <View style={{...styles.container, ...defaultStyles.container}}>
@@ -62,7 +66,7 @@ function Connect() {
                 <LoadingSpinner/>
             )}
             {qrCodeInfo !== null && qrCodeInfo !== undefined && (
-                <QrCodeWithWrapper text={qrCodeInfo}/>
+                <QrCodeWithWrapper text={JSON.stringify(qrCodeInfo)}/>
             )}
             <Text style={{
                 ...defaultStyles.text,
